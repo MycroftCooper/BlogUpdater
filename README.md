@@ -36,4 +36,13 @@
 3. 将BlogUpdater.exe创建快捷方式至计算机的启动目录下
 4. 完成，每次计算机开机时，自动更新博客
 
+各个文件说明:
+- BlogUpdater.7z 打包好的exe文件，可以直接使用
+- main.py 主入口
+- setting_data.data 配置文件，第一次使用需要修改
+- news_spider.py 新闻爬虫代码
+- weather_spider.py 天气爬虫代码
+- weatherPage.css 天气页面输出css样式
+
+
 如果对你有所帮助，欢迎Star一下
