@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout)
+from PyQt5.QtWidgets import (QMainWindow, QTabWidget, QWidget, QVBoxLayout)
 
 from .tab_write_view import TabWriteView
 from .tab_options_view import TabOptionsView
@@ -11,13 +11,6 @@ class HexoBlogManagerView(QMainWindow):
     writeTab = None
     publishTab = None
     optionsTab = None
-
-    @staticmethod
-    def createWindo():
-        app = QApplication(sys.argv)
-        view = HexoBlogManagerView()
-        view.show()
-        sys.exit(app.exec_())
 
     def __init__(self):
         super().__init__()

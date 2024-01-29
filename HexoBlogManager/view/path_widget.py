@@ -12,11 +12,12 @@ class PathWidget(QWidget):
         layout.addWidget(self.__label, row, 0)
         layout.addWidget(self.__input, row, 1)
         layout.addWidget(self.__button, row, 2)
-        self.setCanEdit(canEdite)
+        self.setEnabled(canEdite)
 
-    def setCanEdit(self, canEdite:bool):
-        self.__input.setReadOnly(not canEdite)
-        self.__button.setEnabled(canEdite)
+    def setEnabled(self, enabled):
+        super().setEnabled(enabled)
+        self.__input.setReadOnly(not enabled)
+        self.__button.setEnabled(enabled)
 
     def __openFileDialog(self):
         directory = QFileDialog.getExistingDirectory(self, "Select Directory")
