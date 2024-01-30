@@ -18,11 +18,21 @@ class OptionsData:
         "Auto Publish at boot": False,
         "Publish Timeout Limit:": 200
     })
-    
+
+@dataclass
+class NavigationData:
+    tags: list = []
+    templates: list = []
+    categorizations: list = []
+    lastUpdateTime: int = 0
+    postsData : dict = {}
+
 @dataclass
 class PostData:
     name: str
+    path: str
     categorization: str
     tags: str
-    creation_time: datetime
     words_num: int
+    creation_time: datetime
+    lastUpdateTime: int
