@@ -1,82 +1,120 @@
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QGridLayout, QPushButton, QCheckBox, QSpinBox, QLabel)
-from .path_widget import PathWidget
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QGridLayout, QPushButton, QCheckBox, QSpinBox, QLabel, QMessageBox)
 from PyQt5.QtCore import (pyqtSignal)
+from .path_widget import (PathWidget, PathType)
+from .error_dialog import ErrorDialog
 
 class TabOptionsView(QWidget):
+    reloadOptionsSignal = pyqtSignal()
     saveOptionsSignal = pyqtSignal()
-    __widgets = []
-    
-    def __init__(self, parent: QWidget):
-        super().__init__(parent)
-        self.__initTabUI()
+    openHexoConfigSignal = pyqtSignal()
 
-    def __initTabUI(self):
+    data_dict = {}
+    view_data_dict = {}
+
+    def initTabUI(self):
+        self.__isEditing = False
+
         layout = QVBoxLayout()
 
-        self.__isEditing = False
+        self.reload_btn = QPushButton('Reload Options')
+        self.reload_btn.clicked.connect(self.reloadOptionsSignal)
+        layout.addWidget(self.reload_btn)
+
         self.edit_btn = QPushButton('Edit Options')
-        self.edit_btn.clicked.connect(self.onEditBtnClick)
+        self.edit_btn.clicked.connect(self.__onEditBtnClick)
         layout.addWidget(self.edit_btn)
 
         # 使用网格布局
         grid_layout = QGridLayout()
         self.path_widgets = {}
 
-        paths = ['Blog Root Path','Blog Remote Url','Blog Local Url', 'Posts Path', 'Assets Path', 'Templates Path', 'News Page Path', 'Weather Page Path']
-        for path_label in paths:
-            path_widget = PathWidget(grid_layout, path_label, False)
-            self.path_widgets[path_label] = path_widget
-            
-        row = grid_layout.rowCount()
-        
-        timeout_limit_label = QLabel("Publish Timeout Limit:")
-        grid_layout.addWidget(timeout_limit_label, row, 0)
-        self.publish_timeout_limit_spin_box = QSpinBox(self)
-        self.publish_timeout_limit_spin_box.setMinimum(100)  # 设置最小值
-        self.publish_timeout_limit_spin_box.setMaximum(2000)  # 设置最大值
-        self.publish_timeout_limit_spin_box.setValue(200)  # 设置初始值
-        self.publish_timeout_limit_spin_box.setSingleStep(100)
-        self.publish_timeout_limit_spin_box.setEnabled(False)
-        grid_layout.addWidget(self.publish_timeout_limit_spin_box, row, 1)
-        self.__widgets.append(self.publish_timeout_limit_spin_box)
-        
-        row += 1
-        
-        self.auto_publish_checkbox = QCheckBox('Auto Publish at boot')
-        self.auto_publish_checkbox.setEnabled(False)
-        grid_layout.addWidget(self.auto_publish_checkbox, row, 0)
-        self.__widgets.append(self.auto_publish_checkbox)
-        
-        self.need_clan_up_checkbox = QCheckBox('Need Clan Up On Publish')
-        self.need_clan_up_checkbox.setEnabled(False)
-        grid_layout.addWidget(self.need_clan_up_checkbox, row, 1)
-        self.__widgets.append(self.need_clan_up_checkbox)
-        
-        row += 1
-        
-        self.update_news_checkbox = QCheckBox('Update News On Publish')
-        self.update_news_checkbox.setEnabled(False)
-        grid_layout.addWidget(self.update_news_checkbox, row, 0)
-        self.__widgets.append(self.update_news_checkbox)
-        
-        self.update_weather_checkbox = QCheckBox('Update Weather On Publish')
-        self.update_weather_checkbox.setEnabled(False)
-        grid_layout.addWidget(self.update_weather_checkbox, row, 1)
-        self.__widgets.append(self.update_weather_checkbox)
+        for key, value in self.data_dict.items():
+            row = grid_layout.rowCount()
+            widget = None
+
+            if isinstance(value, str):
+                path_label = key
+                if path_label.__contains__("Url"):
+                    widget = PathWidget(grid_layout, path_label, PathType.Url)
+                elif path_label.__contains__("Page Path"):
+                    widget = PathWidget(grid_layout, path_label, PathType.File)
+                else:
+                    widget = PathWidget(grid_layout, path_label, PathType.Dir)
+                widget.path = value
+                widget.setEnabled(False)
+                self.path_widgets[key] = widget
+                
+            elif isinstance(value, bool):
+                widget = QCheckBox(key)
+                widget.setEnabled(False)
+                widget.setChecked(value)
+                grid_layout.addWidget(widget, row, 0)
+
+            elif isinstance(value, int):
+                label = QLabel(key)
+                grid_layout.addWidget(label, row, 0)
+                widget = QSpinBox(self)
+                widget.setMinimum(100)  # 设置最小值
+                widget.setMaximum(2000)  # 设置最大值
+                widget.setValue(value)  # 设置初始值
+                widget.setSingleStep(100)
+                widget.setEnabled(False)
+                grid_layout.addWidget(widget, row, 1)
+
+            self.view_data_dict[key] = widget
         
         layout.addLayout(grid_layout)
+
+        self.open_config_file_btn = QPushButton('Open Hexo Config File')
+        self.open_config_file_btn.clicked.connect(self.openHexoConfigSignal)
+        layout.addWidget(self.open_config_file_btn)
+
         self.setLayout(layout)
 
-    def onEditBtnClick(self):
-        self.__isEditing = not self.__isEditing
+    def updateOptions(self):
+        for key, value in self.data_dict.items():
+            widget = self.view_data_dict[key]
+            if isinstance(widget, PathWidget):
+                widget.path = value
+                
+            elif isinstance(widget, QCheckBox):
+                widget.setChecked(value)
 
-        for path_widget in self.path_widgets.values():
-            path_widget.setEnabled(self.__isEditing)
-        for w in self.__widgets:
-            w.setEnabled(self.__isEditing)
-            
-        if self.__isEditing:
+            elif isinstance(widget, QSpinBox):
+                widget.setValue(value)
+        
+    def __onEditBtnClick(self):
+        if not self.__isEditing:
             self.edit_btn.setText('Save Options')
+            self.__isEditing = True
         else:
+            if not self.__checkSubmission():return
             self.edit_btn.setText('Edit Options')
+            self.__view2Data()
             self.saveOptionsSignal.emit()
+            self.__isEditing = False
+
+        for widget in self.view_data_dict.values():
+            widget.setEnabled(self.__isEditing)
+
+    def __checkSubmission(self):
+        for path_widget in self.path_widgets.values():
+            if not path_widget.path:
+                ErrorDialog.logWraning(self, "Options Save Warning", f"{path_widget.labelStr} cant be null!")
+                return False
+            
+            if not path_widget.isPathExists:
+                ErrorDialog.logWraning(self, "Options Save Warning", f"{path_widget.labelStr} : {path_widget.path} not exists!")
+                return False
+        return True
+    
+    def __view2Data(self):
+        for k,v in self.view_data_dict.items():
+            value = None
+            if isinstance(v, PathWidget):
+                value = v.path
+            elif isinstance(v, QCheckBox):
+                value = v.isChecked()
+            elif isinstance(v, QSpinBox):
+                value = v.value()
+            self.data_dict[k] = value

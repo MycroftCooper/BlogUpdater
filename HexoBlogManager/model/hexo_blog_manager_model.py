@@ -8,25 +8,32 @@ import webbrowser
 from pathlib import Path
 from .model_data import OptionsData
 from .model_data import PostData
+from view.error_dialog import ErrorDialog
 
 class HexoBlogManagerModel():
+    OptionsDataFilePath = "HexoBlogMgrOptionsData.json"
     options_data: OptionsData
     posts_data: dict
+
+    def __init__(self):
+        self.loadOptionsData()
     
     def loadOptionsData(self):
-        options_file = Path('HexoBlogMgrOptionsData.json')
+        options_file = Path(self.OptionsDataFilePath)
         if options_file.exists():
             with open(options_file, 'r', encoding='utf-8') as file:
                 options_dict = json.load(file)
                 self.options_data = OptionsData(**options_dict)
         else:
             self.options_data = OptionsData()
-            self.saveOptionsData()
     
     def saveOptionsData(self):
-        with open('HexoBlogMgrOptionsData.json', 'w', encoding='utf-8') as file:
-            options_dict = dataclasses.asdict(self.options_data)
-            json.dump(options_dict, file, indent=4)
+        try:
+            with open(self.OptionsDataFilePath, 'w', encoding='utf-8') as file:
+                options_dict = dataclasses.asdict(self.options_data)
+                json.dump(options_dict, file, indent=4)
+        except Exception as e:
+            ErrorDialog.logError(e, "model>saveOptionsData")
     
     def scanAllPost(self):
         pass
@@ -36,15 +43,7 @@ class HexoBlogManagerModel():
             os.system(f"hexo new {title}")
         else:
             os.system(f"hexo new {temp} {title}")
-    
-    def __updateNewsAndWeather(self):
-        if self.options_data.update_news:
-            todo: 爬取新闻
-        
-        if self.options_data.update_weather:
-            todo: 爬取天气
             
-    
     def publishBlog(self ,isRemote:bool):
         time_start=time.time()
         
@@ -69,3 +68,10 @@ class HexoBlogManagerModel():
             webbrowser.open_new(self.options_data.blog_remote_url)
         else:
             webbrowser.open_new(self.options_data.blog_local_url)
+
+    def __updateNewsAndWeather(self):
+        if self.options_data.update_news:
+            todo: 爬取新闻
+        
+        if self.options_data.update_weather:
+            todo: 爬取天气

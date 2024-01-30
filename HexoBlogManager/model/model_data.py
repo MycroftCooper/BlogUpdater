@@ -3,19 +3,21 @@ import datetime
 
 @dataclass
 class OptionsData:
-    blog_root_path: str
-    blog_remote_url: str
-    blog_local_url: str
-    posts_path: str
-    assets_path: str
-    templates_path: str
-    news_page_path: str
-    weather_page_path: str
-    auto_publish_at_boot: bool
-    need_clan_up: bool
-    update_news: bool
-    update_weather: bool
-    publish_timeout_limit: int
+    data_dict: dict = field(default_factory=lambda: {
+        "Blog Remote Url": "",
+        "Blog Local Url": "",
+        "Blog Root Path": "",
+        "Posts Path": "",
+        "Assets Path": "",
+        "Templates Path": "",
+        "News Page Path": "",
+        "Weather Page Path": "",
+        "Need Clan Up On Publish": False,
+        "Update News On Publish": False,
+        "Update Weather On Publish": False,
+        "Auto Publish at boot": False,
+        "Publish Timeout Limit:": 200
+    })
     
 @dataclass
 class PostData:
