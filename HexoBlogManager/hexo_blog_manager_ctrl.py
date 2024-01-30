@@ -11,6 +11,7 @@ class HexoBlogManagerCtrl():
         self.model = model
         self.bindViewSignal()
         self.initOptionsData()
+        self.initNavigationData()
         
     def bindViewSignal(self):
         self.view.optionsTab.reloadOptionsSignal.connect(self.reloadOptionsData)
@@ -31,6 +32,12 @@ class HexoBlogManagerCtrl():
 
     def openBlog(self, isRemote:bool):
         pass
+#endregion
+
+#region Navigation Ctrl
+    def initNavigationData(self):
+        self.model.loadNavigationData()
+        self.model.scanAllPost()
 #endregion
 
 #region Options Ctrl

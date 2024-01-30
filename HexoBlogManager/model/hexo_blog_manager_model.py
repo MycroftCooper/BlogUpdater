@@ -5,6 +5,7 @@ import time
 import json
 import threading
 import webbrowser
+from datetime import datetime
 from pathlib import Path
 from .model_data import OptionsData
 from .model_data import (PostData, NavigationData)
@@ -15,7 +16,7 @@ class HexoBlogManagerModel():
     NavigationDataFilePath = "HexoBlogMgrNavigationCacheData.json"
 
     options_data: OptionsData
-    navigation_data: PostData
+    navigation_data: NavigationData
 
     def __init__(self):
         self.loadOptionsData()
@@ -45,13 +46,13 @@ class HexoBlogManagerModel():
         if navigation_file.exists():
             try:
                 with open(navigation_file, 'r', encoding='utf-8') as file:
-                    navigation_dict = json.load(file)
-                    self.navigation_data = NavigationData(**navigation_dict)
+                    navigation_file_data = json.load(file)
+                    self.navigation_data = NavigationData(**navigation_file_data)
             except Exception as e:
                 ErrorDialog.logError(e, "model>loadNavigationData")
         else:
+            self.navigation_data = NavigationData()
             self.scanAllPost()
-            self.saveNavigationData()
 
     def saveNavigationData(self):
         try:
@@ -64,16 +65,24 @@ class HexoBlogManagerModel():
     def scanAllPost(self):
         last_scan_time = self.navigation_data.lastUpdateTime
         post_path_list = self.__loadAllPostPath()
+        postDataDict = self.navigation_data.postsData
         for post_path in post_path_list:
             modification_time = os.path.getmtime(post_path)
             long_time = int(modification_time)  # 转换为整数
-            if long_time < last_scan_time:# 没有变动，可以不扫描更新
+            isScaned = post_path in postDataDict
+            if isScaned and long_time < last_scan_time:# 没有变动，可以不扫描更新
                 continue
-            properties = self.__scanPostProperties(post_path)
+            
+            if isScaned:
+                del postDataDict[post_path]
+            postData = PostData.scanPostData(post_path)
+            postDataDict[post_path] = postData
+        self.navigation_data.lastUpdateTime = int(datetime.now().timestamp())
+        self.saveNavigationData()
 
 
     def __loadAllPostPath(self):
-        folder_path = OptionsData.data_dict["Posts Path"]
+        folder_path = self.options_data.data_dict["Posts Path"]
         if not os.path.exists(folder_path):
             ErrorDialog.logError(f"Folder path '{folder_path}' does not exist.", "model>loadAllPostPath")
             return []
@@ -84,9 +93,6 @@ class HexoBlogManagerModel():
                     md_file_path = os.path.join(root, file)
                     md_file_paths.append(md_file_path)
         return md_file_paths
-
-    def __scanPostProperties(self, path):
-        pass
     #endregion
     
     def createNewPost(self, title: str, temp: str):
