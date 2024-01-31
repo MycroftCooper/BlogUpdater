@@ -7,9 +7,9 @@ import threading
 import webbrowser
 from datetime import datetime
 from pathlib import Path
+from view.error_dialog import ErrorDialog
 from .model_data import OptionsData
 from .model_data import (PostData, NavigationData)
-from view.error_dialog import ErrorDialog
 
 class HexoBlogManagerModel():
     OptionsDataFilePath = "HexoBlogMgrOptionsData.json"
@@ -47,6 +47,10 @@ class HexoBlogManagerModel():
             try:
                 with open(navigation_file, 'r', encoding='utf-8') as file:
                     navigation_file_data = json.load(file)
+                    # 单独处理 postsData
+                    posts_data = {k: PostData(**v) for k, v in navigation_file_data.get('postsData', {}).items()}
+                    # 更新 postsData
+                    navigation_file_data['postsData'] = posts_data
                     self.navigation_data = NavigationData(**navigation_file_data)
             except Exception as e:
                 ErrorDialog.logError(e, "model>loadNavigationData")
@@ -58,6 +62,9 @@ class HexoBlogManagerModel():
         try:
             with open(self.NavigationDataFilePath, 'w', encoding='utf-8') as file:
                 navigation_dict = dataclasses.asdict(self.navigation_data)
+                # 仅将 PostData 实例转换为字典
+                navigation_dict['postsData'] = {k: dataclasses.asdict(v) if isinstance(v, PostData) else v 
+                                            for k, v in self.navigation_data.postsData.items()}
                 json.dump(navigation_dict, file, indent=4)
         except Exception as e:
             ErrorDialog.logError(e, "model>saveNavigationData")
@@ -77,7 +84,7 @@ class HexoBlogManagerModel():
                 del postDataDict[post_path]
             postData = PostData.scanPostData(post_path)
             postDataDict[post_path] = postData
-        self.navigation_data.lastUpdateTime = int(datetime.now().timestamp())
+        self.navigation_data.updateData(post_path_list, self.options_data.data_dict["Templates Path"])
         self.saveNavigationData()
 
 

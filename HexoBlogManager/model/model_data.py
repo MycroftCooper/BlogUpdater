@@ -2,6 +2,7 @@ import re
 import os
 from dataclasses import dataclass, field
 from datetime import datetime
+from view.error_dialog import ErrorDialog
 
 @dataclass
 class OptionsData:
@@ -25,20 +26,48 @@ class OptionsData:
 class NavigationData:
     tags: list = field(default_factory=list)
     templates: list = field(default_factory=list)
-    categorizations: list = field(default_factory=list)
+    categories: list = field(default_factory=list)
     lastUpdateTime: int = 0
     postsData : dict = field(default_factory=dict)
     
-    def addTag(self, tagStr:str):
-        if not self.tags.__contains__(tagStr):
-            self.tags.append(tagStr)
+    def updateData(self, newPathList:list, templatesPath:str):
+        needDel = []
+        for path in self.postsData.keys():
+            if not newPathList.__contains__(path):
+                needDel.append(path)
+        for delPath in needDel:
+            del self.postsData[delPath]
+        
+        self.tags.clear()
+        self.categories.clear()
+        for postData in self.postsData.values():
+            for tag in postData.tags:
+                if not self.tags.__contains__(tag):
+                    self.tags.append(tag)
+            for category in postData.categories:
+                if not self.categories.__contains__(category):
+                    self.categories.append(category)
+        
+        self.templates.clear()
+        if not os.path.exists(templatesPath):
+            print("指定的路径不存在")
+            ErrorDialog.logError(f"{templatesPath}not exists!", "model>NavigationData>updateData>load templates")
+            return
+        for _, _, files in os.walk(templatesPath):
+            for file in files:
+                if file.endswith(".md"):
+                    filename_without_extension, _ = os.path.splitext(file)
+                    self.templates.append(filename_without_extension)
+
+        self.lastUpdateTime = int(datetime.now().timestamp())
+
         
 
 @dataclass
 class PostData:
     name: str = ""
     path: str = ""
-    categorization: str = ""
+    categories: list = field(default_factory=list)
     tags: list = field(default_factory=list)
     size: int = 0
     creation_time: int = 0
@@ -72,7 +101,8 @@ class PostData:
 
         title_pattern = r'^title:\s*(.*)$'
         date_pattern = r'^date:\s*(.*)$'
-        categories_pattern = r'^categories:\s*\n\s*- (.*)$'
+        categories_pattern = r'^categories:\s*\n(^\s*- .*$)+'
+        category_pattern = r'^\s*- (.*)$'
         tags_pattern = r'^tags:\s*\n(^\s*- .*$)+'
         tag_pattern = r'^\s*- (.*)$'
 
@@ -90,9 +120,10 @@ class PostData:
                 except ValueError:
                     post_data.creation_time = 0
 
-            categories_match = re.match(categories_pattern, line, re.M)
+            categories_match = re.search(categories_pattern, metadata_str, re.M)
             if categories_match:
-                post_data.categorization = categories_match.group(1).strip()
+                categories = re.findall(category_pattern, categories_match.group(0), re.M)
+                post_data.categories = [category.strip() for category in categories]
 
             tags_match = re.search(tags_pattern, metadata_str, re.M)
             if tags_match:

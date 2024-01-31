@@ -1,6 +1,7 @@
 import os
-import subprocess
 import sys
+import subprocess
+from datetime import datetime
 
 from view import *
 from model import *
@@ -14,9 +15,14 @@ class HexoBlogManagerCtrl():
         self.initNavigationData()
         
     def bindViewSignal(self):
-        self.view.optionsTab.reloadOptionsSignal.connect(self.reloadOptionsData)
-        self.view.optionsTab.saveOptionsSignal.connect(self.saveOptionsData)
-        self.view.optionsTab.openHexoConfigSignal.connect(self.openHexoConfigFile)
+        navigateTab = self.view.navigateTab
+        navigateTab.navigateUpdateViewSignal.connect(self.updateNavigationView)
+        navigateTab.navigateUpdatePostDataSignal.connect(self.updateNavigationData)
+
+        optionsTab = self.view.optionsTab
+        optionsTab.reloadOptionsDataSignal.connect(self.reloadOptionsData)
+        optionsTab.saveOptionsDataSignal.connect(self.saveOptionsData)
+        optionsTab.openHexoConfigSignal.connect(self.openHexoConfigFile)
     
 #region Write Ctrl
     def refreshConfig(self):
@@ -38,6 +44,70 @@ class HexoBlogManagerCtrl():
     def initNavigationData(self):
         self.model.loadNavigationData()
         self.model.scanAllPost()
+        self.updateNavigationView()
+
+    def updateNavigationData(self):
+        self.model.scanAllPost()
+        self.updateNavigationView()
+
+    def updateNavigationView(self):
+        navigation = self.view.navigateTab
+        data = self.model.navigation_data
+        postsData = data.postsData.values()
+
+        if navigation.searchStr:
+            postsData = self.filter_posts(postsData, navigation.searchStr)
+
+        viewDict = self.__groupPosts(postsData, navigation.infoGroupBy)
+
+        if navigation.infoSortBy != SortBy.NONE:
+            for group, posts in viewDict.items():
+                sorted_posts = self.__sortPosts(posts, navigation.infoSortBy)
+                viewDict[group] = sorted_posts
+        
+        navigation.postInfoViewDict = viewDict
+
+        navigation.updateInfoTree()
+
+    def __filterPosts(self, posts, search_str):
+        pass
+
+    def __groupPosts(self, posts, group_by):
+        grouped_posts = {}
+        if group_by == GroupBy.NONE:# 不进行分组，所有帖子都在同一组
+            grouped_posts["NONE"] = list(posts)
+            return grouped_posts
+        
+        for post in posts:
+            if group_by == GroupBy.Category:
+                for category in self.model.navigation_data.categories:
+                    if category in post.categories:
+                        grouped_posts.setdefault(category, []).append(post)
+
+            elif group_by == GroupBy.Tag:
+                for tag in self.model.navigation_data.tags:
+                    if tag in post.tags:
+                        grouped_posts.setdefault(tag, []).append(post)
+
+            elif group_by in [GroupBy.CreationTime, GroupBy.LastUpdateTime]:
+                post_time = getattr(post, group_by.name)
+                date_key = datetime.fromtimestamp(post_time).strftime('%Y-%m-%d')
+                grouped_posts.setdefault(date_key, []).append(post)
+
+        return grouped_posts
+
+    def __sortPosts(self, posts, sort_by):
+        # 根据不同的排序标准进行排序
+        if sort_by == SortBy.Name:
+            sorted_posts = sorted(posts, key=lambda post: post.name)
+        elif sort_by == SortBy.Size:
+            sorted_posts = sorted(posts, key=lambda post: post.size)
+        elif sort_by == SortBy.CreationTime:
+            sorted_posts = sorted(posts, key=lambda post: post.creation_time)
+        elif sort_by == SortBy.LastUpdateTime:
+            sorted_posts = sorted(posts, key=lambda post: post.lastUpdateTime)
+        return sorted_posts
+
 #endregion
 
 #region Options Ctrl

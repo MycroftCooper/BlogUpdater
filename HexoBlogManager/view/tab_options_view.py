@@ -4,8 +4,8 @@ from .path_widget import (PathWidget, PathType)
 from .error_dialog import ErrorDialog
 
 class TabOptionsView(QWidget):
-    reloadOptionsSignal = pyqtSignal()
-    saveOptionsSignal = pyqtSignal()
+    reloadOptionsDataSignal = pyqtSignal()
+    saveOptionsDataSignal = pyqtSignal()
     openHexoConfigSignal = pyqtSignal()
 
     data_dict = {}
@@ -17,7 +17,7 @@ class TabOptionsView(QWidget):
         layout = QVBoxLayout()
 
         self.reload_btn = QPushButton('Reload Options')
-        self.reload_btn.clicked.connect(self.reloadOptionsSignal)
+        self.reload_btn.clicked.connect(self.reloadOptionsDataSignal)
         layout.addWidget(self.reload_btn)
 
         self.edit_btn = QPushButton('Edit Options')
@@ -91,7 +91,7 @@ class TabOptionsView(QWidget):
             if not self.__checkSubmission():return
             self.edit_btn.setText('Edit Options')
             self.__view2Data()
-            self.saveOptionsSignal.emit()
+            self.saveOptionsDataSignal.emit()
             self.__isEditing = False
 
         for widget in self.view_data_dict.values():
