@@ -67,7 +67,7 @@ class HexoBlogManagerCtrl():
         
         navigation.postInfoViewDict = viewDict
 
-        navigation.updateInfoTree()
+        navigation.updatePostsInfo()
 
     def __filterPosts(self, posts, search_str):
         pass

@@ -1,7 +1,7 @@
 from PyQt5.QtCore import (Qt, pyqtSignal)
-from PyQt5.QtWidgets import (QWidget, QLabel, QVBoxLayout, QHBoxLayout, QComboBox, QLineEdit, QPushButton, QListWidget, QListWidgetItem, QCheckBox, QSizePolicy)
-from .post_info_widget import PostInfoWidget
+from PyQt5.QtWidgets import (QWidget, QLabel, QVBoxLayout, QHBoxLayout, QComboBox, QLineEdit, QPushButton, QListWidget, QCheckBox, QSizePolicy)
 from .navigate_view_enum import (GroupBy, SortBy, InfoShowRule)
+from .post_group_widget import PostGroupWidget
 
 class TabNavigateView(QWidget):
     postInfoViewDict: dict = None
@@ -99,6 +99,8 @@ class TabNavigateView(QWidget):
         layout.addLayout(checkbox_layout)
 
         self.list_widget = QListWidget(self)
+        self.list_widget.setVerticalScrollMode(QListWidget.ScrollPerPixel)
+        self.list_widget.setStyleSheet("QListWidget::item:hover { background-color: transparent; }")
         layout.addWidget(self.list_widget)
 
         self.setLayout(layout)
@@ -127,18 +129,8 @@ class TabNavigateView(QWidget):
         self.searchStr = self.search_input.text()
         self.navigateUpdateViewSignal.emit()
 
-    def updateInfoTree(self):
+    def updatePostsInfo(self):
         self.list_widget.clear()
 
         for group, posts in self.postInfoViewDict.items():
-            # 添加组标签作为一个列表项
-            group_item = QListWidgetItem(group, self.list_widget)
-            group_item.setFlags(group_item.flags() | Qt.ItemIsUserCheckable)
-            group_item.setCheckState(Qt.Unchecked)  # 可以设置为可折叠
-
-            for post in posts:
-                # 为每个帖子创建一个自定义的部件
-                post_widget = PostInfoWidget(self ,post)
-                post_item = QListWidgetItem(self.list_widget)
-                self.list_widget.setItemWidget(post_item, post_widget)
-                post_item.setSizeHint(post_widget.sizeHint())
+            group_widget = PostGroupWidget(self.list_widget, group, posts)

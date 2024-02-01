@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QHBoxLayout
+from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QHBoxLayout, QSizePolicy
 from .navigate_view_enum import InfoShowRule
 
 class PostInfoWidget(QWidget):
