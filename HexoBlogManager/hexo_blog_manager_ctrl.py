@@ -44,7 +44,7 @@ class HexoBlogManagerCtrl():
     def initNavigationData(self):
         self.model.loadNavigationData()
         self.model.scanAllPost()
-        self.updateNavigationView()
+        self.view.navigateTab.onNeedUpdateView()
 
     def updateNavigationData(self):
         self.model.scanAllPost()

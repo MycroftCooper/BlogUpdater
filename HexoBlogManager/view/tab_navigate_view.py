@@ -101,6 +101,7 @@ class TabNavigateView(QWidget):
         self.list_widget = QListWidget(self)
         self.list_widget.setVerticalScrollMode(QListWidget.ScrollPerPixel)
         self.list_widget.setStyleSheet("QListWidget::item:hover { background-color: transparent; }")
+        self.post_group_list = []
         layout.addWidget(self.list_widget)
 
         self.setLayout(layout)
@@ -131,6 +132,8 @@ class TabNavigateView(QWidget):
 
     def updatePostsInfo(self):
         self.list_widget.clear()
-
+        self.post_group_list.clear()
+        
         for group, posts in self.postInfoViewDict.items():
             group_widget = PostGroupWidget(self.list_widget, group, posts)
+            self.post_group_list.append(group_widget)

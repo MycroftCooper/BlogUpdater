@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QListWidget, QListWidgetItem, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QSizePolicy
+from PyQt5.QtWidgets import QFrame, QListWidget, QListWidgetItem, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QSizePolicy
 from PyQt5.QtCore import QSize
 from .post_info_widget import PostInfoWidget
 
@@ -15,10 +15,12 @@ class PostGroupWidget(QWidget):
         self.header_widget = QWidget()
         header_layout = QHBoxLayout(self.header_widget)
         self.toggle_button = QPushButton("[-]")
+        self.toggle_button.setFixedSize(30, 30)
         self.toggle_button.clicked.connect(self.__toggleContent)
         header_layout.addWidget(self.toggle_button)
         header_layout.addWidget(QLabel(group_name))
-        header_layout.addWidget(QLabel(f"{len(posts)} Posts"))
+        header_layout.addWidget(QLabel(f"Posts Num:{len(posts)}"))
+        self.header_widget.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         layout.addWidget(self.header_widget)
 
         # 创建内容区域
@@ -28,9 +30,15 @@ class PostGroupWidget(QWidget):
         for post in posts:
             content_layout.addWidget(PostInfoWidget(self, post))
         layout.addWidget(self.content_area)
+        
+        separator = QFrame()
+        separator.setFrameShape(QFrame.HLine)
+        separator.setFrameShadow(QFrame.Sunken)
+        layout.addWidget(separator)
 
         self.list_item = QListWidgetItem(parent)
         parent.setItemWidget(self.list_item, self)
+        self.setLayout(layout)
         self.updateSize()
         
     def __toggleContent(self):
