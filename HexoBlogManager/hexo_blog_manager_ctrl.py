@@ -62,7 +62,7 @@ class HexoBlogManagerCtrl():
 
         if navigation.infoSortBy != SortBy.NONE:
             for group, posts in viewDict.items():
-                sorted_posts = self.__sortPosts(posts, navigation.infoSortBy)
+                sorted_posts = self.__sortPosts(posts, navigation.infoSortBy, navigation.isReverse)
                 viewDict[group] = sorted_posts
         
         navigation.postInfoViewDict = viewDict
@@ -96,16 +96,16 @@ class HexoBlogManagerCtrl():
 
         return grouped_posts
 
-    def __sortPosts(self, posts, sort_by):
+    def __sortPosts(self, posts, sort_by, isReverse):
         # 根据不同的排序标准进行排序
         if sort_by == SortBy.Name:
-            sorted_posts = sorted(posts, key=lambda post: post.name)
+            sorted_posts = sorted(posts, key=lambda post: post.name, reverse = isReverse)
         elif sort_by == SortBy.Size:
-            sorted_posts = sorted(posts, key=lambda post: post.size)
+            sorted_posts = sorted(posts, key=lambda post: post.size, reverse = isReverse)
         elif sort_by == SortBy.CreationTime:
-            sorted_posts = sorted(posts, key=lambda post: post.creation_time)
+            sorted_posts = sorted(posts, key=lambda post: post.creation_time, reverse = isReverse)
         elif sort_by == SortBy.LastUpdateTime:
-            sorted_posts = sorted(posts, key=lambda post: post.lastUpdateTime)
+            sorted_posts = sorted(posts, key=lambda post: post.lastUpdateTime, reverse = isReverse)
         return sorted_posts
 
 #endregion

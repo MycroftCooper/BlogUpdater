@@ -14,11 +14,12 @@ class PostGroupWidget(QWidget):
         # 创建标题栏
         self.header_widget = QWidget()
         header_layout = QHBoxLayout(self.header_widget)
-        self.toggle_button = QPushButton("[-]")
-        self.toggle_button.setFixedSize(30, 30)
-        self.toggle_button.clicked.connect(self.__toggleContent)
-        header_layout.addWidget(self.toggle_button)
-        header_layout.addWidget(QLabel(group_name))
+        if group_name != "NONE":
+            self.toggle_button = QPushButton("[-]")
+            self.toggle_button.setFixedSize(30, 30)
+            self.toggle_button.clicked.connect(self.__toggleContent)
+            header_layout.addWidget(self.toggle_button)
+            header_layout.addWidget(QLabel(group_name))
         header_layout.addWidget(QLabel(f"Posts Num:{len(posts)}"))
         self.header_widget.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         layout.addWidget(self.header_widget)
@@ -26,9 +27,12 @@ class PostGroupWidget(QWidget):
         # 创建内容区域
         self.content_area = QWidget()
         content_layout = QVBoxLayout(self.content_area)
+        self.post_info_widgets = []
         
         for post in posts:
-            content_layout.addWidget(PostInfoWidget(self, post))
+            info = PostInfoWidget(self, post)
+            content_layout.addWidget(info)
+            self.post_info_widgets.append(info)
         layout.addWidget(self.content_area)
         
         separator = QFrame()
@@ -46,25 +50,6 @@ class PostGroupWidget(QWidget):
         self.content_area.setVisible(not self.content_area.isVisible())
         self.toggle_button.setText("[+]" if self.is_collapsed else "[-]")
         self.updateSize()
-
-    def reverseOrder(self, isReverse):
-        if isReverse == self.is_reverse:
-            return
-        self.is_reverse = isReverse
-        
-        content_layout = self.content_area.layout()
-        # 从布局中移除所有部件，同时保留它们的引用
-        widgets = []
-        for i in range(content_layout.count()):
-            item = content_layout.itemAt(i)
-            widget = item.widget()
-            if widget:
-                content_layout.removeWidget(widget)
-                widgets.append(widget)
-
-        # 倒序添加部件
-        for widget in reversed(widgets):
-            content_layout.addWidget(widget)
 
     def sizeHint(self):
         header_size_hint = self.header_widget.sizeHint()

@@ -79,7 +79,7 @@ class TabNavigateView(QWidget):
 
         checkbox_layout = QHBoxLayout()
         self.reverse_checkbox = QCheckBox("Is Reverse")
-        self.reverse_checkbox.stateChanged.connect(self.onInfoShowRuleChanaged)
+        self.reverse_checkbox.stateChanged.connect(self.onNeedUpdateView)
         checkbox_layout.addWidget(self.reverse_checkbox)
         self.show_categories_checkbox = QCheckBox("Show Categories")
         self.show_categories_checkbox.stateChanged.connect(self.onInfoShowRuleChanaged)
@@ -107,7 +107,6 @@ class TabNavigateView(QWidget):
         self.setLayout(layout)
 
     def onInfoShowRuleChanaged(self):
-        self.isReverse = self.reverse_checkbox.isChecked()
         # 更新 InfoShowRule
         self.infoShowRule = InfoShowRule.NONE
         if self.show_categories_checkbox.isChecked():
@@ -121,6 +120,10 @@ class TabNavigateView(QWidget):
         if self.show_last_update_time_checkbox.isChecked():
             self.infoShowRule |= InfoShowRule.LastUpdateTime
 
+        for group_widget in self.post_group_list:
+            for post_widget in group_widget.post_info_widgets:
+                post_widget.setInfoVisible(self.infoShowRule)
+
     def onNeedUpdateView(self):
         # 更新 SortBy
         self.infoSortBy = SortBy(self.sort_by_combo.currentData())
@@ -128,6 +131,7 @@ class TabNavigateView(QWidget):
         self.infoGroupBy = GroupBy(self.group_by_combo.currentData())
         # 更新 Search String
         self.searchStr = self.search_input.text()
+        self.isReverse = self.reverse_checkbox.isChecked()
         self.navigateUpdateViewSignal.emit()
 
     def updatePostsInfo(self):
