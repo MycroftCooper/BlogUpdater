@@ -1,9 +1,10 @@
 from PyQt5.QtWidgets import QFrame, QListWidget, QListWidgetItem, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QSizePolicy
 from PyQt5.QtCore import QSize
 from .post_info_widget import PostInfoWidget
+from .navigate_view_enum import InfoShowRule
 
 class PostGroupWidget(QWidget):
-    def __init__(self, parent: QListWidget, group_name, posts):
+    def __init__(self, parent: QListWidget, group_name, posts, info_show_rule:InfoShowRule):
         super().__init__(parent)
 
         self.is_reverse = False
@@ -30,7 +31,7 @@ class PostGroupWidget(QWidget):
         self.post_info_widgets = []
         
         for post in posts:
-            info = PostInfoWidget(self, post)
+            info = PostInfoWidget(self, post, info_show_rule)
             content_layout.addWidget(info)
             self.post_info_widgets.append(info)
         layout.addWidget(self.content_area)

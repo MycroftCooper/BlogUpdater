@@ -5,13 +5,15 @@ from PyQt5.QtWidgets import QGridLayout ,QFrame, QWidget, QLabel, QVBoxLayout, Q
 from .navigate_view_enum import InfoShowRule
 
 class PostInfoWidget(QWidget):
-    def __init__(self, parent: QWidget, post_data):
+    def __init__(self, parent: QWidget, post_data, info_show_rule:InfoShowRule):
         super().__init__(parent)
 
         self.post_data = post_data
 
         # 创建布局
         layout = QVBoxLayout()
+        
+        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
 
         # 创建并添加标签
         self.name_str = QLabel(self.post_data.name)
@@ -55,6 +57,8 @@ class PostInfoWidget(QWidget):
         layout.addWidget(separator)
 
         self.setLayout(layout)
+        
+        self.setInfoVisible(info_show_rule)
 
     def setInfoVisible(self, rule:InfoShowRule):
         # 根据规则设置每个信息的可见性
@@ -63,6 +67,17 @@ class PostInfoWidget(QWidget):
         self.size_label.setVisible(bool(rule & InfoShowRule.Size))
         self.creation_time_label.setVisible(bool(rule & InfoShowRule.CreationTime))
         self.last_update_time_label.setVisible(bool(rule & InfoShowRule.LastUpdateTime))
+        
+        self.categories_str.setVisible(bool(rule & InfoShowRule.Categories))
+        self.tags_str.setVisible(bool(rule & InfoShowRule.Tags))
+        self.size_str.setVisible(bool(rule & InfoShowRule.Size))
+        self.creation_time_str.setVisible(bool(rule & InfoShowRule.CreationTime))
+        self.last_update_time_str.setVisible(bool(rule & InfoShowRule.LastUpdateTime))
+        
+        self.layout().invalidate()
+        self.updateGeometry()
+        self.adjustSize()
+        self.update()
 
     def __formatTimestamp(self, timestamp):
         return datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')

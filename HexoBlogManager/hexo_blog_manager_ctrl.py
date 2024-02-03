@@ -56,7 +56,7 @@ class HexoBlogManagerCtrl():
         postsData = data.postsData.values()
 
         if navigation.searchStr:
-            postsData = self.filter_posts(postsData, navigation.searchStr)
+            postsData = self.__filterPosts(postsData, navigation.searchStr)
 
         viewDict = self.__groupPosts(postsData, navigation.infoGroupBy)
 
@@ -70,7 +70,18 @@ class HexoBlogManagerCtrl():
         navigation.updatePostsInfo()
 
     def __filterPosts(self, posts, search_str):
-        pass
+        # 初始化结果数组
+        result = []
+    
+        # 遍历所有帖子
+        for post in posts:
+            # 检查名称、类别和标签是否包含搜索字符串
+            if search_str.lower() in post.name.lower() or \
+            any(search_str.lower() in category.lower() for category in post.categories) or \
+            any(search_str.lower() in tag.lower() for tag in post.tags):
+                result.append(post)
+            
+        return result
 
     def __groupPosts(self, posts, group_by):
         grouped_posts = {}

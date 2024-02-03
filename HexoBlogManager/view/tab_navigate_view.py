@@ -71,7 +71,7 @@ class TabNavigateView(QWidget):
 
         # 取消搜索按钮
         self.clear_search_button = QPushButton("X")
-        self.clear_search_button.clicked.connect(self.onNeedUpdateView)
+        self.clear_search_button.clicked.connect(self.onStopSearchBtnClick)
         self.clear_search_button.setFixedSize(20, 20)  # 设置按钮的大小
         search_layout.addWidget(self.clear_search_button)
 
@@ -82,18 +82,23 @@ class TabNavigateView(QWidget):
         self.reverse_checkbox.stateChanged.connect(self.onNeedUpdateView)
         checkbox_layout.addWidget(self.reverse_checkbox)
         self.show_categories_checkbox = QCheckBox("Show Categories")
+        self.show_categories_checkbox.setChecked(True)
         self.show_categories_checkbox.stateChanged.connect(self.onInfoShowRuleChanaged)
         checkbox_layout.addWidget(self.show_categories_checkbox)
         self.show_tags_checkbox = QCheckBox("Show Tags")
+        self.show_tags_checkbox.setChecked(True)
         self.show_tags_checkbox.stateChanged.connect(self.onInfoShowRuleChanaged)
         checkbox_layout.addWidget(self.show_tags_checkbox)
         self.show_size_checkbox = QCheckBox("Show Size")
+        self.show_size_checkbox.setChecked(True)
         self.show_size_checkbox.stateChanged.connect(self.onInfoShowRuleChanaged)
         checkbox_layout.addWidget(self.show_size_checkbox)
         self.show_creation_checkbox = QCheckBox("Show Creation Time")
+        self.show_creation_checkbox.setChecked(True)
         self.show_creation_checkbox.stateChanged.connect(self.onInfoShowRuleChanaged)
         checkbox_layout.addWidget(self.show_creation_checkbox)
         self.show_last_update_time_checkbox = QCheckBox("Show Last Update Time")
+        self.show_last_update_time_checkbox.setChecked(True)
         self.show_last_update_time_checkbox.stateChanged.connect(self.onInfoShowRuleChanaged)
         checkbox_layout.addWidget(self.show_last_update_time_checkbox)
         layout.addLayout(checkbox_layout)
@@ -107,6 +112,14 @@ class TabNavigateView(QWidget):
         self.setLayout(layout)
 
     def onInfoShowRuleChanaged(self):
+        self.__checkShowInfo()
+
+        for group_widget in self.post_group_list:
+            for post_widget in group_widget.post_info_widgets:
+                post_widget.setInfoVisible(self.infoShowRule)
+            group_widget.updateSize()
+            
+    def __checkShowInfo(self):
         # 更新 InfoShowRule
         self.infoShowRule = InfoShowRule.NONE
         if self.show_categories_checkbox.isChecked():
@@ -120,9 +133,10 @@ class TabNavigateView(QWidget):
         if self.show_last_update_time_checkbox.isChecked():
             self.infoShowRule |= InfoShowRule.LastUpdateTime
 
-        for group_widget in self.post_group_list:
-            for post_widget in group_widget.post_info_widgets:
-                post_widget.setInfoVisible(self.infoShowRule)
+    def onStopSearchBtnClick(self):
+        self.searchStr = None
+        self.search_input.setText("")
+        self.onNeedUpdateView()
 
     def onNeedUpdateView(self):
         # 更新 SortBy
@@ -132,12 +146,14 @@ class TabNavigateView(QWidget):
         # 更新 Search String
         self.searchStr = self.search_input.text()
         self.isReverse = self.reverse_checkbox.isChecked()
+        
         self.navigateUpdateViewSignal.emit()
 
     def updatePostsInfo(self):
         self.list_widget.clear()
         self.post_group_list.clear()
         
+        self.__checkShowInfo()
         for group, posts in self.postInfoViewDict.items():
-            group_widget = PostGroupWidget(self.list_widget, group, posts)
+            group_widget = PostGroupWidget(self.list_widget, group, posts, self.infoShowRule)
             self.post_group_list.append(group_widget)
