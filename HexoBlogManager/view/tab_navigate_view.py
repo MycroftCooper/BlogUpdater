@@ -1,7 +1,9 @@
 from PyQt5.QtCore import (Qt, pyqtSignal)
-from PyQt5.QtWidgets import (QWidget, QLabel, QVBoxLayout, QHBoxLayout, QComboBox, QLineEdit, QPushButton, QListWidget, QCheckBox, QSizePolicy)
+from PyQt5.QtWidgets import (QWidget, QLabel, QVBoxLayout, QHBoxLayout, QComboBox, QLineEdit, QPushButton, QListWidget,
+                             QCheckBox, QSizePolicy)
 from .navigate_view_enum import (GroupBy, SortBy, InfoShowRule)
 from .post_group_widget import PostGroupWidget
+
 
 class TabNavigateView(QWidget):
     postInfoViewDict: dict = None
@@ -13,12 +15,13 @@ class TabNavigateView(QWidget):
 
     navigateUpdateViewSignal = pyqtSignal()
     navigateUpdatePostDataSignal = pyqtSignal()
+    post_group_list = []
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.initUI()
+        self.__init_ui()
 
-    def initUI(self):
+    def __init_ui(self):
         # 整体布局
         layout = QVBoxLayout()
 
@@ -28,7 +31,7 @@ class TabNavigateView(QWidget):
 
         # 排序和分组布局
         sort_group_layout = QHBoxLayout()
-        
+
         # Sort By组合框
         sort_by_label = QLabel("Sort By:")
         sort_by_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
@@ -36,7 +39,7 @@ class TabNavigateView(QWidget):
         self.sort_by_combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         for option in SortBy:
             self.sort_by_combo.addItem(option.name, option.value)
-        self.sort_by_combo.currentIndexChanged.connect(self.onNeedUpdateView)
+        self.sort_by_combo.currentIndexChanged.connect(self.on_need_update_view)
         sort_group_layout.addWidget(sort_by_label)
         sort_group_layout.addWidget(self.sort_by_combo)
 
@@ -47,7 +50,7 @@ class TabNavigateView(QWidget):
         self.group_by_combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         for option in GroupBy:
             self.group_by_combo.addItem(option.name, option.value)
-        self.group_by_combo.currentIndexChanged.connect(self.onNeedUpdateView)
+        self.group_by_combo.currentIndexChanged.connect(self.on_need_update_view)
         sort_group_layout.addWidget(group_by_label)
         sort_group_layout.addWidget(self.group_by_combo)
 
@@ -66,42 +69,51 @@ class TabNavigateView(QWidget):
 
         # 搜索按钮
         self.search_button = QPushButton("Search")
-        self.search_button.clicked.connect(self.onNeedUpdateView)
+        self.search_button.clicked.connect(self.on_need_update_view)
         search_layout.addWidget(self.search_button)
 
         # 取消搜索按钮
         self.clear_search_button = QPushButton("X")
-        self.clear_search_button.clicked.connect(self.onStopSearchBtnClick)
+        self.clear_search_button.clicked.connect(self.on_stop_search_btn_click)
         self.clear_search_button.setFixedSize(20, 20)  # 设置按钮的大小
         search_layout.addWidget(self.clear_search_button)
 
         layout.addLayout(search_layout)
 
         checkbox_layout = QHBoxLayout()
-        self.reverse_checkbox = QCheckBox("Is Reverse")
-        self.reverse_checkbox.stateChanged.connect(self.onNeedUpdateView)
-        checkbox_layout.addWidget(self.reverse_checkbox)
         self.show_categories_checkbox = QCheckBox("Show Categories")
         self.show_categories_checkbox.setChecked(True)
-        self.show_categories_checkbox.stateChanged.connect(self.onInfoShowRuleChanaged)
+        self.show_categories_checkbox.stateChanged.connect(self.on_info_show_rule_changed)
         checkbox_layout.addWidget(self.show_categories_checkbox)
         self.show_tags_checkbox = QCheckBox("Show Tags")
         self.show_tags_checkbox.setChecked(True)
-        self.show_tags_checkbox.stateChanged.connect(self.onInfoShowRuleChanaged)
+        self.show_tags_checkbox.stateChanged.connect(self.on_info_show_rule_changed)
         checkbox_layout.addWidget(self.show_tags_checkbox)
         self.show_size_checkbox = QCheckBox("Show Size")
         self.show_size_checkbox.setChecked(True)
-        self.show_size_checkbox.stateChanged.connect(self.onInfoShowRuleChanaged)
+        self.show_size_checkbox.stateChanged.connect(self.on_info_show_rule_changed)
         checkbox_layout.addWidget(self.show_size_checkbox)
         self.show_creation_checkbox = QCheckBox("Show Creation Time")
         self.show_creation_checkbox.setChecked(True)
-        self.show_creation_checkbox.stateChanged.connect(self.onInfoShowRuleChanaged)
+        self.show_creation_checkbox.stateChanged.connect(self.on_info_show_rule_changed)
         checkbox_layout.addWidget(self.show_creation_checkbox)
         self.show_last_update_time_checkbox = QCheckBox("Show Last Update Time")
         self.show_last_update_time_checkbox.setChecked(True)
-        self.show_last_update_time_checkbox.stateChanged.connect(self.onInfoShowRuleChanaged)
+        self.show_last_update_time_checkbox.stateChanged.connect(self.on_info_show_rule_changed)
         checkbox_layout.addWidget(self.show_last_update_time_checkbox)
         layout.addLayout(checkbox_layout)
+
+        group_option_layout = QHBoxLayout()
+        self.reverse_checkbox = QCheckBox("Is Reverse")
+        self.reverse_checkbox.stateChanged.connect(self.on_need_update_view)
+        group_option_layout.addWidget(self.reverse_checkbox)
+        self.expand_button = QPushButton("Expand All")
+        self.expand_button.clicked.connect(lambda _: self.set_group_expend(True))
+        group_option_layout.addWidget(self.expand_button)
+        self.fold_button = QPushButton("Fold All")
+        self.fold_button.clicked.connect(lambda _: self.set_group_expend(False))
+        group_option_layout.addWidget(self.fold_button)
+        layout.addLayout(group_option_layout)
 
         self.list_widget = QListWidget(self)
         self.list_widget.setVerticalScrollMode(QListWidget.ScrollPerPixel)
@@ -111,15 +123,15 @@ class TabNavigateView(QWidget):
 
         self.setLayout(layout)
 
-    def onInfoShowRuleChanaged(self):
-        self.__checkShowInfo()
+    def on_info_show_rule_changed(self):
+        self.__check_show_info()
 
         for group_widget in self.post_group_list:
             for post_widget in group_widget.post_info_widgets:
-                post_widget.setInfoVisible(self.infoShowRule)
-            group_widget.updateSize()
-            
-    def __checkShowInfo(self):
+                post_widget.set_info_visible(self.infoShowRule)
+            group_widget.update_size()
+
+    def __check_show_info(self):
         # 更新 InfoShowRule
         self.infoShowRule = InfoShowRule.NONE
         if self.show_categories_checkbox.isChecked():
@@ -133,12 +145,12 @@ class TabNavigateView(QWidget):
         if self.show_last_update_time_checkbox.isChecked():
             self.infoShowRule |= InfoShowRule.LastUpdateTime
 
-    def onStopSearchBtnClick(self):
-        self.searchStr = None
+    def on_stop_search_btn_click(self):
+        self.searchStr = ""
         self.search_input.setText("")
-        self.onNeedUpdateView()
+        self.on_need_update_view()
 
-    def onNeedUpdateView(self):
+    def on_need_update_view(self):
         # 更新 SortBy
         self.infoSortBy = SortBy(self.sort_by_combo.currentData())
         # 更新 GroupBy
@@ -146,14 +158,20 @@ class TabNavigateView(QWidget):
         # 更新 Search String
         self.searchStr = self.search_input.text()
         self.isReverse = self.reverse_checkbox.isChecked()
-        
+
         self.navigateUpdateViewSignal.emit()
 
-    def updatePostsInfo(self):
+    def set_group_expend(self, is_expend: bool):
+        if self.post_group_list is None:
+            return
+        for group_widget in self.post_group_list:
+            group_widget.set_expend(is_expend)
+
+    def update_posts_info(self):
         self.list_widget.clear()
         self.post_group_list.clear()
-        
-        self.__checkShowInfo()
+
+        self.__check_show_info()
         for group, posts in self.postInfoViewDict.items():
             group_widget = PostGroupWidget(self.list_widget, group, posts, self.infoShowRule)
             self.post_group_list.append(group_widget)

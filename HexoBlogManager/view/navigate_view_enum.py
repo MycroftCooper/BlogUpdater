@@ -1,11 +1,13 @@
 from enum import Enum, Flag, auto
 
+
 class SortBy(Enum):
     NONE = 0
-    Name = 1
+    Title = 1
     Size = 2
     CreationTime = 3
     LastUpdateTime = 4
+
 
 class GroupBy(Enum):
     NONE = 0
@@ -13,6 +15,7 @@ class GroupBy(Enum):
     Tag = 2
     CreationTime = 3
     LastUpdateTime = 4
+
 
 class InfoShowRule(Flag):
     NONE = 0

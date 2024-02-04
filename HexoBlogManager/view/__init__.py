@@ -9,15 +9,15 @@ from .error_dialog import ErrorDialog
 from .navigate_view_enum import SortBy, InfoShowRule, GroupBy
 
 __all__ = [
-            "HexoBlogManagerView", 
-           "TabWriteView", 
-           "TabOptionsView", 
-           "TabNavigateView", 
-           "SortBy", 
-           "GroupBy", 
-           "InfoShowRule", 
-           "TabPublishView", 
-           "PostGroupWidget", 
-           "PostInfoWidget", 
-           "ErrorDialog"
-        ]
+    "HexoBlogManagerView",
+    "TabWriteView",
+    "TabOptionsView",
+    "TabNavigateView",
+    "SortBy",
+    "GroupBy",
+    "InfoShowRule",
+    "TabPublishView",
+    "PostGroupWidget",
+    "PostInfoWidget",
+    "ErrorDialog"
+]

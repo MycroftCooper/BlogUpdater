@@ -1,8 +1,9 @@
 from PyQt5.QtWidgets import QMessageBox, QWidget
 
+
 class ErrorDialog:
     @staticmethod
-    def logError(message, text:str, title:str = "ERROR"):
+    def log_error(message, text: str, title: str = "ERROR"):
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Critical)
         msg.setText(text)
@@ -11,5 +12,5 @@ class ErrorDialog:
         msg.exec_()
 
     @staticmethod
-    def logWraning(parentWidget : QWidget, title:str, message: str):
-        QMessageBox.warning(parentWidget, title, message)
+    def log_warning(parent_widget: QWidget, title: str, message: str):
+        QMessageBox.warning(parent_widget, title, message)

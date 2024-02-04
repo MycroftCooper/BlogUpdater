@@ -6,89 +6,93 @@ from datetime import datetime
 from view import *
 from model import *
 
-class HexoBlogManagerCtrl():
-    def __init__(self, view:HexoBlogManagerView, model:HexoBlogManagerModel):
+
+class HexoBlogManagerCtrl:
+    def __init__(self, view: HexoBlogManagerView, model: HexoBlogManagerModel):
         self.view = view
         self.model = model
-        self.bindViewSignal()
-        self.initOptionsData()
-        self.initNavigationData()
-        
-    def bindViewSignal(self):
-        navigateTab = self.view.navigateTab
-        navigateTab.navigateUpdateViewSignal.connect(self.updateNavigationView)
-        navigateTab.navigateUpdatePostDataSignal.connect(self.updateNavigationData)
+        self.bind_view_signal()
+        self.init_options_data()
+        self.init_navigation_data()
 
-        optionsTab = self.view.optionsTab
-        optionsTab.reloadOptionsDataSignal.connect(self.reloadOptionsData)
-        optionsTab.saveOptionsDataSignal.connect(self.saveOptionsData)
-        optionsTab.openHexoConfigSignal.connect(self.openHexoConfigFile)
-    
-#region Write Ctrl
-    def refreshConfig(self):
+    def bind_view_signal(self):
+        navigate_tab = self.view.navigateTab
+        navigate_tab.navigateUpdateViewSignal.connect(self.update_navigation_view)
+        navigate_tab.navigateUpdatePostDataSignal.connect(self.update_navigation_data)
+
+        options_tab = self.view.optionsTab
+        options_tab.reloadOptionsDataSignal.connect(self.reload_options_data)
+        options_tab.saveOptionsDataSignal.connect(self.save_options_data)
+        options_tab.openHexoConfigSignal.connect(self.open_hexo_config_file)
+
+    # region Write Ctrl
+    def refresh_config(self):
         pass
 
-    def createNewPost(self):
-        pass
-#endregion
-
-#region Publish Ctrl
-    def publish(self, isRemote:bool):
+    def create_new_post(self):
         pass
 
-    def openBlog(self, isRemote:bool):
+    # endregion
+
+    # region Publish Ctrl
+    def publish(self, is_remote: bool):
         pass
-#endregion
 
-#region Navigation Ctrl
-    def initNavigationData(self):
-        self.model.loadNavigationData()
-        self.model.scanAllPost()
-        self.view.navigateTab.onNeedUpdateView()
+    def open_blog(self, is_remote: bool):
+        pass
 
-    def updateNavigationData(self):
-        self.model.scanAllPost()
-        self.updateNavigationView()
+    # endregion
 
-    def updateNavigationView(self):
+    # region Navigation Ctrl
+    def init_navigation_data(self):
+        self.model.load_navigation_data()
+        self.model.scan_all_post()
+        self.view.navigateTab.on_need_update_view()
+
+    def update_navigation_data(self):
+        self.model.scan_all_post()
+        self.update_navigation_view()
+
+    def update_navigation_view(self):
         navigation = self.view.navigateTab
         data = self.model.navigation_data
-        postsData = data.postsData.values()
+        posts_data = data.postsData.values()
 
         if navigation.searchStr:
-            postsData = self.__filterPosts(postsData, navigation.searchStr)
+            posts_data = self.__filter_posts(posts_data, navigation.searchStr)
 
-        viewDict = self.__groupPosts(postsData, navigation.infoGroupBy)
+        view_dict = self.__group_posts(posts_data, navigation.infoGroupBy)
 
         if navigation.infoSortBy != SortBy.NONE:
-            for group, posts in viewDict.items():
-                sorted_posts = self.__sortPosts(posts, navigation.infoSortBy, navigation.isReverse)
-                viewDict[group] = sorted_posts
-        
-        navigation.postInfoViewDict = viewDict
+            for group, posts in view_dict.items():
+                sorted_posts = self.__sort_posts(posts, navigation.infoSortBy, navigation.isReverse)
+                view_dict[group] = sorted_posts
 
-        navigation.updatePostsInfo()
+        navigation.postInfoViewDict = view_dict
 
-    def __filterPosts(self, posts, search_str):
+        navigation.update_posts_info()
+
+    @staticmethod
+    def __filter_posts(posts, search_str):
         # 初始化结果数组
         result = []
-    
+
         # 遍历所有帖子
         for post in posts:
             # 检查名称、类别和标签是否包含搜索字符串
-            if search_str.lower() in post.name.lower() or \
-            any(search_str.lower() in category.lower() for category in post.categories) or \
-            any(search_str.lower() in tag.lower() for tag in post.tags):
+            if search_str.lower() in post.title.lower() or \
+                    any(search_str.lower() in category.lower() for category in post.categories) or \
+                    any(search_str.lower() in tag.lower() for tag in post.tags):
                 result.append(post)
-            
+
         return result
 
-    def __groupPosts(self, posts, group_by):
+    def __group_posts(self, posts, group_by):
         grouped_posts = {}
-        if group_by == GroupBy.NONE:# 不进行分组，所有帖子都在同一组
+        if group_by == GroupBy.NONE:  # 不进行分组，所有帖子都在同一组
             grouped_posts["NONE"] = list(posts)
             return grouped_posts
-        
+
         for post in posts:
             if group_by == GroupBy.Category:
                 for category in self.model.navigation_data.categories:
@@ -101,43 +105,49 @@ class HexoBlogManagerCtrl():
                         grouped_posts.setdefault(tag, []).append(post)
 
             elif group_by in [GroupBy.CreationTime, GroupBy.LastUpdateTime]:
-                post_time = getattr(post, group_by.name)
+                if group_by == GroupBy.CreationTime:
+                    group_by_str = "creationTime"
+                else:
+                    group_by_str = "lastUpdateTime"
+                post_time = getattr(post, group_by_str)
                 date_key = datetime.fromtimestamp(post_time).strftime('%Y-%m-%d')
                 grouped_posts.setdefault(date_key, []).append(post)
 
         return grouped_posts
 
-    def __sortPosts(self, posts, sort_by, isReverse):
+    @staticmethod
+    def __sort_posts(posts, sort_by, is_reverse):
+        sorted_posts = posts
         # 根据不同的排序标准进行排序
-        if sort_by == SortBy.Name:
-            sorted_posts = sorted(posts, key=lambda post: post.name, reverse = isReverse)
+        if sort_by == SortBy.Title:
+            sorted_posts = sorted(posts, key=lambda post: post.title, reverse=is_reverse)
         elif sort_by == SortBy.Size:
-            sorted_posts = sorted(posts, key=lambda post: post.size, reverse = isReverse)
+            sorted_posts = sorted(posts, key=lambda post: post.size, reverse=is_reverse)
         elif sort_by == SortBy.CreationTime:
-            sorted_posts = sorted(posts, key=lambda post: post.creation_time, reverse = isReverse)
+            sorted_posts = sorted(posts, key=lambda post: post.creation_time, reverse=is_reverse)
         elif sort_by == SortBy.LastUpdateTime:
-            sorted_posts = sorted(posts, key=lambda post: post.lastUpdateTime, reverse = isReverse)
+            sorted_posts = sorted(posts, key=lambda post: post.lastUpdateTime, reverse=is_reverse)
         return sorted_posts
 
-#endregion
+    # endregion
 
-#region Options Ctrl
-    def saveOptionsData(self):
+    # region Options Ctrl
+    def save_options_data(self):
         data = self.view.optionsTab.data_dict
         self.model.options_data.data_dict = data
-        self.model.saveOptionsData()
+        self.model.save_options_data()
 
-    def initOptionsData(self):
-        self.model.loadOptionsData()
+    def init_options_data(self):
+        self.model.load_options_data()
         self.view.optionsTab.data_dict = self.model.options_data.data_dict
-        self.view.optionsTab.initTabUI()
+        self.view.optionsTab.init_tab_ui()
 
-    def reloadOptionsData(self):
-        self.model.loadOptionsData()
+    def reload_options_data(self):
+        self.model.load_options_data()
         self.view.optionsTab.data_dict = self.model.options_data.data_dict
-        self.view.optionsTab.updateOptions()
+        self.view.optionsTab.update_options()
 
-    def openHexoConfigFile(self):
+    def open_hexo_config_file(self):
         folder_path = self.model.options_data.data_dict['Blog Root Path']
         file_name = '_config.yml'
         file_path = os.path.join(folder_path, file_name)
@@ -149,6 +159,6 @@ class HexoBlogManagerCtrl():
             else:
                 subprocess.run(["xdg-open", file_path])
         except Exception as e:
-            ErrorDialog.logError(e, "Ctrl>openHexoConfigFile")
+            ErrorDialog.log_error(e, "Ctrl>openHexoConfigFile")
             print(f"Error opening file: {e}")
-#endregion
+    # endregion

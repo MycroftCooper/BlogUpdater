@@ -1,11 +1,12 @@
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QCheckBox, QHBoxLayout, QPushButton, QTextEdit)
 
+
 class TabPublishView(QWidget):
     def __init__(self, parent: QWidget):
         super().__init__(parent)
-        self.__initTabUI()
+        self.__init_tab_ui()
 
-    def __initTabUI(self):
+    def __init_tab_ui(self):
         layout = QVBoxLayout()
 
         # 复选框
@@ -18,12 +19,12 @@ class TabPublishView(QWidget):
         layout.addWidget(self.update_weather_checkbox)
 
         # 按钮和文本输入框的网格布局
-        hBox_layout = QHBoxLayout()
+        h_box_layout = QHBoxLayout()
         self.publish_local_button = QPushButton("Publish To Local")
         self.publish_remote_button = QPushButton("Publish To Remote")
-        hBox_layout.addWidget(self.publish_local_button)
-        hBox_layout.addWidget(self.publish_remote_button)
-        layout.addLayout(hBox_layout)
+        h_box_layout.addWidget(self.publish_local_button)
+        h_box_layout.addWidget(self.publish_remote_button)
+        layout.addLayout(h_box_layout)
 
         # 文本显示区域
         self.publish_output = QTextEdit()
@@ -32,11 +33,11 @@ class TabPublishView(QWidget):
         layout.addWidget(self.publish_output)
 
         # 底部的按钮
-        hBox_layout = QHBoxLayout()
+        h_box_layout = QHBoxLayout()
         self.open_local_button = QPushButton("Open Local Blog")
         self.open_remote_button = QPushButton("Open Remote Blog")
-        hBox_layout.addWidget(self.open_local_button)
-        hBox_layout.addWidget(self.open_remote_button)
-        layout.addLayout(hBox_layout)
+        h_box_layout.addWidget(self.open_local_button)
+        h_box_layout.addWidget(self.open_remote_button)
+        layout.addLayout(h_box_layout)
 
         self.setLayout(layout)

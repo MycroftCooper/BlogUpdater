@@ -3,6 +3,7 @@ from PyQt5.QtCore import (pyqtSignal)
 from .path_widget import (PathWidget, PathType)
 from .error_dialog import ErrorDialog
 
+
 class TabOptionsView(QWidget):
     reloadOptionsDataSignal = pyqtSignal()
     saveOptionsDataSignal = pyqtSignal()
@@ -11,59 +12,59 @@ class TabOptionsView(QWidget):
     data_dict = {}
     view_data_dict = {}
 
-    def initTabUI(self):
-        self.__isEditing = False
-
+    def init_tab_ui(self):
         layout = QVBoxLayout()
+        self.__is_editing = False
 
         self.reload_btn = QPushButton('Reload Options')
         self.reload_btn.clicked.connect(self.reloadOptionsDataSignal)
         layout.addWidget(self.reload_btn)
 
         self.edit_btn = QPushButton('Edit Options')
-        self.edit_btn.clicked.connect(self.__onEditBtnClick)
+        self.edit_btn.clicked.connect(self.__on_edit_btn_click)
         layout.addWidget(self.edit_btn)
 
-        # 使用网格布局
-        grid_layout = QGridLayout()
         self.path_widgets = {}
 
+        # 使用网格布局
+        self.grid_layout = QGridLayout()
+
         for key, value in self.data_dict.items():
-            row = grid_layout.rowCount()
+            row = self.grid_layout.rowCount()
             widget = None
 
             if isinstance(value, str):
                 path_label = key
                 if path_label.__contains__("Url"):
-                    widget = PathWidget(grid_layout, path_label, PathType.Url)
+                    widget = PathWidget(self.grid_layout, path_label, PathType.Url)
                 elif path_label.__contains__("Page Path"):
-                    widget = PathWidget(grid_layout, path_label, PathType.File)
+                    widget = PathWidget(self.grid_layout, path_label, PathType.File)
                 else:
-                    widget = PathWidget(grid_layout, path_label, PathType.Dir)
+                    widget = PathWidget(self.grid_layout, path_label, PathType.Dir)
                 widget.path = value
                 widget.setEnabled(False)
                 self.path_widgets[key] = widget
-                
+
             elif isinstance(value, bool):
                 widget = QCheckBox(key)
                 widget.setEnabled(False)
                 widget.setChecked(value)
-                grid_layout.addWidget(widget, row, 0)
+                self.grid_layout.addWidget(widget, row, 0)
 
             elif isinstance(value, int):
                 label = QLabel(key)
-                grid_layout.addWidget(label, row, 0)
+                self.grid_layout.addWidget(label, row, 0)
                 widget = QSpinBox(self)
                 widget.setMinimum(100)  # 设置最小值
                 widget.setMaximum(2000)  # 设置最大值
                 widget.setValue(value)  # 设置初始值
                 widget.setSingleStep(100)
                 widget.setEnabled(False)
-                grid_layout.addWidget(widget, row, 1)
+                self.grid_layout.addWidget(widget, row, 1)
 
             self.view_data_dict[key] = widget
-        
-        layout.addLayout(grid_layout)
+
+        layout.addLayout(self.grid_layout)
 
         self.open_config_file_btn = QPushButton('Open Hexo Config File')
         self.open_config_file_btn.clicked.connect(self.openHexoConfigSignal)
@@ -71,45 +72,47 @@ class TabOptionsView(QWidget):
 
         self.setLayout(layout)
 
-    def updateOptions(self):
+    def update_options(self):
         for key, value in self.data_dict.items():
             widget = self.view_data_dict[key]
             if isinstance(widget, PathWidget):
                 widget.path = value
-                
+
             elif isinstance(widget, QCheckBox):
                 widget.setChecked(value)
 
             elif isinstance(widget, QSpinBox):
                 widget.setValue(value)
-        
-    def __onEditBtnClick(self):
-        if not self.__isEditing:
+
+    def __on_edit_btn_click(self):
+        if not self.__is_editing:
             self.edit_btn.setText('Save Options')
-            self.__isEditing = True
+            self.__is_editing = True
         else:
-            if not self.__checkSubmission():return
+            if not self.__check_submission():
+                return
             self.edit_btn.setText('Edit Options')
-            self.__view2Data()
+            self.__view_2_data()
             self.saveOptionsDataSignal.emit()
-            self.__isEditing = False
+            self.__is_editing = False
 
         for widget in self.view_data_dict.values():
-            widget.setEnabled(self.__isEditing)
+            widget.setEnabled(self.__is_editing)
 
-    def __checkSubmission(self):
+    def __check_submission(self):
         for path_widget in self.path_widgets.values():
             if not path_widget.path:
-                ErrorDialog.logWraning(self, "Options Save Warning", f"{path_widget.labelStr} cant be null!")
+                ErrorDialog.log_warning(self, "Options Save Warning", f"{path_widget.labelStr} cant be null!")
                 return False
-            
-            if not path_widget.isPathExists:
-                ErrorDialog.logWraning(self, "Options Save Warning", f"{path_widget.labelStr} : {path_widget.path} not exists!")
+
+            if not path_widget.is_path_exists:
+                ErrorDialog.log_warning(self, "Options Save Warning",
+                                        f"{path_widget.labelStr} : {path_widget.path} not exists!")
                 return False
         return True
-    
-    def __view2Data(self):
-        for k,v in self.view_data_dict.items():
+
+    def __view_2_data(self):
+        for k, v in self.view_data_dict.items():
             value = None
             if isinstance(v, PathWidget):
                 value = v.path

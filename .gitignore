@@ -10,3 +10,7 @@ HexoBlogManager/view/__pycache__/
 HexoBlogManager/HexoBlogMgrNavigationCacheData.json
 
 HexoBlogManager/HexoBlogMgrOptionsData.json
+
+__pycache__/
+
+HexoBlogManager/.idea/
