@@ -3,10 +3,12 @@ import os
 import ast
 import time
 import json
+import subprocess
 import threading
 import webbrowser
 from datetime import datetime
 from pathlib import Path
+from .hexo_cmd import HexoCmd
 from view.error_dialog import ErrorDialog
 from .model_data import OptionsData
 from .model_data import (PostData, NavigationData)
@@ -31,6 +33,7 @@ class HexoBlogManagerModel:
                 self.options_data = OptionsData(**options_dict)
         else:
             self.options_data = OptionsData()
+        HexoCmd.set_root(self.options_data.data_dict['Blog Root Path'])
 
     def save_options_data(self):
         try:
@@ -86,7 +89,7 @@ class HexoBlogManagerModel:
                 del post_data_dict[post_path]
             post_data = PostData.scan_post_data(post_path)
             post_data_dict[post_path] = post_data
-        self.navigation_data.update_data(post_path_list, self.options_data.data_dict["Templates Path"])
+        self.navigation_data.update_data(post_path_list)
         self.save_navigation_data()
 
     def __load_all_post_path(self):
@@ -104,12 +107,24 @@ class HexoBlogManagerModel:
 
     # endregion
 
-    @staticmethod
-    def create_new_post(title: str, temp: str):
-        if not temp:
-            os.system(f"hexo new {title}")
-        else:
-            os.system(f"hexo new {temp} {title}")
+    # region Write
+    def create_new_post(self, title: str):
+        is_success, output_str = False, ""
+        std_err = b""  # 初始化 std_err
+
+        try:
+            std_out, std_err = HexoCmd.new(title)
+            output_str = std_out.decode("utf-8")
+            is_success = True
+        except Exception as e:
+            if std_err:  # 检查 std_err 是否已赋值
+                output_str = std_err.decode("utf-8")
+
+        return is_success, output_str
+
+    def open_post(self, title: str):
+        HexoCmd.open(title)
+    # endregion
 
     def publish_blog(self, is_remote: bool):
         time_start = time.time()

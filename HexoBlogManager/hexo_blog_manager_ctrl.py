@@ -3,17 +3,19 @@ import sys
 import subprocess
 from datetime import datetime
 
+import model
 from view import *
 from model import *
 
 
 class HexoBlogManagerCtrl:
-    def __init__(self, view: HexoBlogManagerView, model: HexoBlogManagerModel):
+    def __init__(self, view: HexoBlogManagerView, mgr_model: HexoBlogManagerModel):
         self.view = view
-        self.model = model
+        self.model = mgr_model
         self.bind_view_signal()
         self.init_options_data()
         self.init_navigation_data()
+        self.init_write_tab()
 
     def bind_view_signal(self):
         navigate_tab = self.view.navigateTab
@@ -25,11 +27,47 @@ class HexoBlogManagerCtrl:
         options_tab.saveOptionsDataSignal.connect(self.save_options_data)
         options_tab.openHexoConfigSignal.connect(self.open_hexo_config_file)
 
+        write_tab = self.view.writeTab
+        write_tab.refreshConfigSignal.connect(self.refresh_write_tab_config)
+        write_tab.createNewPostSignal.connect(self.create_new_post)
+        write_tab.importNewPostSignal.connect(self.import_posts)
+
     # region Write Ctrl
-    def refresh_config(self):
+    def init_write_tab(self):
+        write_tab = self.view.writeTab
+        model_data = self.model.navigation_data
+        write_tab.existentCategoryList = model_data.categories
+        write_tab.existentTagList = model_data.tags
+        write_tab.update_config()
+
+    def refresh_write_tab_config(self):
+        self.update_navigation_data()
+        self.init_write_tab()
+
+    def create_new_post(self, new_post_info_dict: dict):
+        posts_data = self.model.navigation_data.postsData
+
+        post_path_root = self.model.options_data.data_dict["Posts Path"]
+        title = new_post_info_dict["title"]
+        path = os.path.join(post_path_root, "source", f"_posts", f"{title}.md")
+        if posts_data.__contains__(path):
+            ErrorDialog.log_error(f"Post '{path}' already exist.", "ctrl>create_new_post")
+            return
+
+        is_success, output_str = self.model.create_new_post(title)
+        self.view.writeTab.std_output_text.clear()
+        self.view.writeTab.std_output_text.setText(output_str)
+
+        if not is_success:
+            return
+        new_post_info_dict["path"] = path
+        self.editor_post_properties(new_post_info_dict)
+        self.model.open_post(title)
+
+    def editor_post_properties(self, post_info_dict: dict):
         pass
 
-    def create_new_post(self):
+    def import_posts(self, posts_list: list):
         pass
 
     # endregion

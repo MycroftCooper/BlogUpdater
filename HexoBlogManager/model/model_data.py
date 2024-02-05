@@ -13,7 +13,6 @@ class OptionsData:
         "Blog Root Path": "",
         "Posts Path": "",
         "Assets Path": "",
-        "Templates Path": "",
         "News Page Path": "",
         "Weather Page Path": "",
         "Need Clan Up On Publish": False,
@@ -27,12 +26,11 @@ class OptionsData:
 @dataclass
 class NavigationData:
     tags: list = field(default_factory=list)
-    templates: list = field(default_factory=list)
     categories: list = field(default_factory=list)
     lastUpdateTime: int = 0
     postsData: dict = field(default_factory=dict)
 
-    def update_data(self, new_path_list: list, templates_path: str):
+    def update_data(self, new_path_list: list):
         need_del = []
         for path in self.postsData.keys():
             if not new_path_list.__contains__(path):
@@ -49,17 +47,6 @@ class NavigationData:
             for category in postData.categories:
                 if not self.categories.__contains__(category):
                     self.categories.append(category)
-
-        self.templates.clear()
-        if not os.path.exists(templates_path):
-            print("指定的路径不存在")
-            ErrorDialog.log_error(f"{templates_path}not exists!", "model>NavigationData>updateData>load templates")
-            return
-        for _, _, files in os.walk(templates_path):
-            for file in files:
-                if file.endswith(".md"):
-                    filename_without_extension, _ = os.path.splitext(file)
-                    self.templates.append(filename_without_extension)
 
         self.lastUpdateTime = int(datetime.now().timestamp())
 

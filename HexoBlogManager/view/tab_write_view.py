@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import (QFrame, QLabel, QFileDialog, QWidget, QVBoxLayout, QFormLayout, QPushButton, QLineEdit,
-                             QComboBox, QDateTimeEdit)
+from PyQt5.QtWidgets import (QTextEdit, QFrame, QLabel, QFileDialog, QWidget, QVBoxLayout, QFormLayout, QPushButton,
+                             QLineEdit, QComboBox, QDateTimeEdit)
 from PyQt5.QtCore import (QDateTime, Qt, pyqtSignal)
 from PyQt5.QtGui import QDragEnterEvent, QDropEvent
 
@@ -9,8 +9,8 @@ class TabWriteView(QWidget):
     createNewPostSignal = pyqtSignal(dict)
     importNewPostSignal = pyqtSignal(list)
 
-    templateList = []
-    categorizationList = []
+    existentCategoryList = []
+    existentTagList = []
 
     def __init__(self, parent: QWidget):
         super().__init__(parent)
@@ -24,6 +24,20 @@ class TabWriteView(QWidget):
         refresh_config_btn = QPushButton('Refresh Config')
         refresh_config_btn.clicked.connect(self.refreshConfigSignal)
         self.layout.addWidget(refresh_config_btn)
+
+        existent_categories_label = QLabel("Existent Categories:")
+        self.layout.addWidget(existent_categories_label)
+        self.existent_categories_text = QTextEdit()
+        self.existent_categories_text.setReadOnly(True)
+        self.existent_categories_text.setMaximumHeight(80)
+        self.layout.addWidget(self.existent_categories_text)
+
+        existent_tags_label = QLabel("Existent Tags:")
+        self.layout.addWidget(existent_tags_label)
+        self.existent_tags_text = QTextEdit()
+        self.existent_tags_text.setReadOnly(True)
+        self.existent_tags_text.setMaximumHeight(80)
+        self.layout.addWidget(self.existent_tags_text)
 
         separator = QFrame()
         separator.setFrameShape(QFrame.HLine)
@@ -39,16 +53,9 @@ class TabWriteView(QWidget):
         self.title_input = QLineEdit()
         form_layout.addRow("Title:", self.title_input)
 
-        # 文章模板下拉选择
-        self.template_combo = QComboBox()
-        self.template_combo.addItems(self.templateList)  # 示例模板
-        form_layout.addRow("Template:", self.template_combo)
-
         # 文章分类下拉选择
-        self.categorization_combo = QComboBox()
-        self.categorization_combo.setEditable(True)
-        self.categorization_combo.addItems(["Technology", "Life", "Misc"])  # 示例分类
-        form_layout.addRow("Categorization:", self.categorization_combo)
+        self.categorization_input = QLineEdit()
+        form_layout.addRow("Categorization:", self.categorization_input)
 
         # 文章标签输入
         self.tags_input = QLineEdit()
@@ -66,6 +73,13 @@ class TabWriteView(QWidget):
         create_post_btn.clicked.connect(self.__on_create_new_post_btn_click)
         create_layout.addWidget(create_post_btn)
         self.layout.addLayout(create_layout)
+
+        std_output_label = QLabel("Std output:")
+        self.layout.addWidget(std_output_label)
+        self.std_output_text = QTextEdit()
+        self.std_output_text.setReadOnly(True)
+        self.std_output_text.setMaximumHeight(60)
+        self.layout.addWidget(self.std_output_text)
 
         separator = QFrame()
         separator.setFrameShape(QFrame.HLine)
@@ -87,11 +101,30 @@ class TabWriteView(QWidget):
 
         self.setLayout(self.layout)
 
+    def update_config(self):
+        # 清空 QComboBox 和 QTextEdit 的当前内容
+        self.existent_categories_text.clear()
+        self.existent_tags_text.clear()
+
+        # 更新 self.existent_categories_text
+        categories_text = '; '.join(self.existentCategoryList)
+        self.existent_categories_text.setText(categories_text)
+
+        # 更新 self.existent_tags_text
+        tags_text = '; '.join(self.existentTagList)
+        self.existent_tags_text.setText(tags_text)
+
     def __on_create_new_post_btn_click(self):
         new_post_info_dict = {
-            "title": self.title_input.text()
-
+            "title": self.title_input.text(),
+            "tags": self.tags_input.text(),
+            "categories": self.categorization_input.text(),
+            "creationTime": self.creation_time_edit.dateTime().toString("yyyy-MM-dd HH:mm:ss")
         }
+        self.createNewPostSignal.emit(new_post_info_dict)
+        self.title_input.clear()
+        self.tags_input.clear()
+        self.creation_time_edit.setDateTime(QDateTime.currentDateTime())
 
     def __on_import_post_btn_click(self):
         options = QFileDialog.Options()
