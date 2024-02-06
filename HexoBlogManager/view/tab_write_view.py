@@ -119,11 +119,12 @@ class TabWriteView(QWidget):
             "title": self.title_input.text(),
             "tags": self.tags_input.text(),
             "categories": self.categorization_input.text(),
-            "creationTime": self.creation_time_edit.dateTime().toString("yyyy-MM-dd HH:mm:ss")
+            "creationTime": self.creation_time_edit.dateTime().toSecsSinceEpoch()
         }
         self.createNewPostSignal.emit(new_post_info_dict)
         self.title_input.clear()
         self.tags_input.clear()
+        self.categorization_input.clear()
         self.creation_time_edit.setDateTime(QDateTime.currentDateTime())
 
     def __on_import_post_btn_click(self):

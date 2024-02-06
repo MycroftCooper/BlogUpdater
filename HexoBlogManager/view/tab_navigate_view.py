@@ -15,6 +15,9 @@ class TabNavigateView(QWidget):
 
     navigateUpdateViewSignal = pyqtSignal()
     navigateUpdatePostDataSignal = pyqtSignal()
+    navigateOpenPostSignal = pyqtSignal(str)
+    navigateDeletePostSignal = pyqtSignal(str)
+    navigateEditPostMetadataSignal = pyqtSignal(dict)
     post_group_list = []
 
     def __init__(self, parent=None):
@@ -175,3 +178,7 @@ class TabNavigateView(QWidget):
         for group, posts in self.postInfoViewDict.items():
             group_widget = PostGroupWidget(self.list_widget, group, posts, self.infoShowRule)
             self.post_group_list.append(group_widget)
+            for post_info_widget in group_widget.post_info_widgets:
+                post_info_widget.openPostSignal.connect(lambda path: self.navigateOpenPostSignal.emit(path))
+                post_info_widget.deletePostSignal.connect(lambda path: self.navigateDeletePostSignal.emit(path))
+                post_info_widget.editePostMateDataSignal.connect(lambda data: self.navigateEditPostMetadataSignal(data))

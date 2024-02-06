@@ -1,11 +1,18 @@
 import os
 import math
 from datetime import datetime
-from PyQt5.QtWidgets import QGridLayout, QFrame, QWidget, QLabel, QVBoxLayout, QPushButton, QHBoxLayout, QSizePolicy
+from PyQt5.QtCore import (Qt, pyqtSignal)
+from PyQt5.QtWidgets import (QMessageBox, QGridLayout, QFrame, QWidget, QLabel, QVBoxLayout, QPushButton, QHBoxLayout,
+                             QSizePolicy)
 from .navigate_view_enum import InfoShowRule
+from .post_metadata_editor_view import PostMetadataEditorDialog
 
 
 class PostInfoWidget(QWidget):
+    openPostSignal = pyqtSignal(str)
+    deletePostSignal = pyqtSignal(str)
+    editePostMateDataSignal = pyqtSignal(dict)
+
     def __init__(self, parent: QWidget, post_data, info_show_rule: InfoShowRule):
         super().__init__(parent)
 
@@ -19,9 +26,9 @@ class PostInfoWidget(QWidget):
         # 创建并添加标签
         self.title_str = QLabel(self.post_data.title)
         self.categories_label = QLabel("Categories: ")
-        self.categories_str = QLabel(', '.join(self.post_data.categories))
+        self.categories_str = QLabel('; '.join(self.post_data.categories))
         self.tags_label = QLabel("Tags: ")
-        self.tags_str = QLabel(', '.join(self.post_data.tags))
+        self.tags_str = QLabel('; '.join(self.post_data.tags))
         self.size_label = QLabel("Size: ")
         self.size_str = QLabel(self.__convert_bytes(self.post_data.size))
         self.creation_time_label = QLabel("Creation Time: ")
@@ -45,11 +52,15 @@ class PostInfoWidget(QWidget):
 
         # 创建按钮
         button_layout = QHBoxLayout()
-        self.open_button = QPushButton("Open")
-        self.open_button.clicked.connect(self.__on_open_btn_click)
-        self.edit_button = QPushButton("Edit Metadata")
-        button_layout.addWidget(self.open_button)
-        button_layout.addWidget(self.edit_button)
+        open_button = QPushButton("Open")
+        open_button.clicked.connect(lambda: self.openPostSignal.emit(self.post_data.path))
+        button_layout.addWidget(open_button)
+        edit_button = QPushButton("Edit Metadata")
+        edit_button.clicked.connect(self.__on_edit_metadata_btn_click)
+        button_layout.addWidget(edit_button)
+        del_button = QPushButton("Delete")
+        del_button.clicked.connect(self.__on_del_post_btn_click)
+        button_layout.addWidget(del_button)
         layout.addLayout(button_layout)
 
         separator = QFrame()
@@ -81,15 +92,27 @@ class PostInfoWidget(QWidget):
         self.update()
 
     def __on_edit_metadata_btn_click(self):
-        # todo: 增加文章属性编辑弹窗
-        pass
+        dialog = PostMetadataEditorDialog(self)
 
-    def __on_open_btn_click(self):
-        if os.path.exists(self.post_data.path):
-            if os.name == 'nt':  # Windows
-                os.startfile(self.post_data.path)
-            elif os.name == 'posix':  # macOS, Linux
-                subprocess.run(['open' if os.uname().sysname == 'Darwin' else 'xdg-open', self.post_data.path])
+        # 设置初始数据
+        initial_data = {
+            "title": self.post_data.title,
+            "categories": '; '.join(self.post_data.categories),
+            "tags": '; '.join(self.post_data.tags),
+            "creation_time": self.__format_timestamp(self.post_data.creationTime)
+        }
+        dialog.set_data(initial_data)
+
+        if dialog.exec_() == QDialog.Accepted:
+            data = dialog.get_data()
+        self.editePostMateDataSignal.emit(data)
+
+    def __on_del_post_btn_click(self):
+        reply = QMessageBox.question(self, 'Confirm Deletion',
+                                     f'Are you sure you want to delete post<{self.post_data.title}>?\n{self.post_data.path}?'
+                                     , QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            self.deletePostSignal.emit(self.post_data.path)
 
     @staticmethod
     def __format_timestamp(timestamp):

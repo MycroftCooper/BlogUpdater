@@ -8,7 +8,8 @@ import threading
 import webbrowser
 from datetime import datetime
 from pathlib import Path
-from .hexo_cmd import HexoCmd
+from .hexo_cmd_helper import HexoCmdHelper
+from .post_helper import PostHelper
 from view.error_dialog import ErrorDialog
 from .model_data import OptionsData
 from .model_data import (PostData, NavigationData)
@@ -33,7 +34,8 @@ class HexoBlogManagerModel:
                 self.options_data = OptionsData(**options_dict)
         else:
             self.options_data = OptionsData()
-        HexoCmd.set_root(self.options_data.data_dict['Blog Root Path'])
+        HexoCmdHelper.set_root(self.options_data.data_dict['Blog Root Path'])
+        PostHelper.set_posts_root(self.options_data.data_dict['Posts Path'])
 
     def save_options_data(self):
         try:
@@ -52,9 +54,7 @@ class HexoBlogManagerModel:
             try:
                 with open(navigation_file, 'r', encoding='utf-8') as file:
                     navigation_file_data = json.load(file)
-                    # 单独处理 postsData
                     posts_data = {k: PostData(**v) for k, v in navigation_file_data.get('postsData', {}).items()}
-                    # 更新 postsData
                     navigation_file_data['postsData'] = posts_data
                     self.navigation_data = NavigationData(**navigation_file_data)
             except Exception as e:
@@ -76,7 +76,7 @@ class HexoBlogManagerModel:
 
     def scan_all_post(self):
         last_scan_time = self.navigation_data.lastUpdateTime
-        post_path_list = self.__load_all_post_path()
+        post_path_list = PostHelper.load_all_post_path()
         post_data_dict = self.navigation_data.postsData
         for post_path in post_path_list:
             modification_time = os.path.getmtime(post_path)
@@ -87,43 +87,67 @@ class HexoBlogManagerModel:
 
             if is_scanned:
                 del post_data_dict[post_path]
-            post_data = PostData.scan_post_data(post_path)
+            post_data = PostHelper.scan_post_data(post_path)
             post_data_dict[post_path] = post_data
         self.navigation_data.update_data(post_path_list)
         self.save_navigation_data()
 
-    def __load_all_post_path(self):
-        folder_path = self.options_data.data_dict["Posts Path"]
-        if not os.path.exists(folder_path):
-            ErrorDialog.log_error(f"Folder path '{folder_path}' does not exist.", "model>loadAllPostPath")
-            return []
-        md_file_paths = []
-        for root, _, files in os.walk(folder_path):
-            for file in files:
-                if file.endswith(".md"):
-                    md_file_path = os.path.join(root, file)
-                    md_file_paths.append(md_file_path)
-        return md_file_paths
+    def delete_post(self, path):
+        if not self.navigation_data.postsData.__contains__(path):
+            ErrorDialog.log_error(f"cant delete，because post<{path}> is not in data!", "model>delete_post")
+            return False
+        PostHelper.del_post(path)
+        self.navigation_data.postsData.pop(path)
+        self.navigation_data.update_statistic_data()
+        self.save_navigation_data()
+        return True
 
     # endregion
 
     # region Write
     def create_new_post(self, title: str):
         is_success, output_str = False, ""
-        std_err = b""  # 初始化 std_err
-
+        std_err = b""
         try:
-            std_out, std_err = HexoCmd.new(title)
+            std_out, std_err = HexoCmdHelper.new(title)
             output_str = std_out.decode("utf-8")
             is_success = True
         except Exception as e:
             if std_err:  # 检查 std_err 是否已赋值
                 output_str = std_err.decode("utf-8")
-
+            else:
+                ErrorDialog.log_error(e, "model>create_new_post")
+        if is_success:
+            new_post_data = PostHelper.scan_post_data(title, True)
+            self.navigation_data.postsData[new_post_data.path] = new_post_data
         return is_success, output_str
 
-    def open_post(self, title: str):
-        HexoCmd.open(title)
+    def change_post_meta_data(self, path: str, new_mata_data: dict):
+        if not self.navigation_data.postsData.__contains__(path):
+            ErrorDialog.log_error(f"post<{path}> is not exist in data!", "change_post_mata_data")
+            return False
+        target_post_data = self.navigation_data.postsData[path]
+
+        if new_mata_data.__contains__("tags") and new_mata_data["tags"]:
+            unique_tags = set(new_mata_data["tags"].split(';'))
+            target_post_data.tags = list(unique_tags)
+        if new_mata_data.__contains__("categories") and new_mata_data["categories"]:
+            unique_categories = set(new_mata_data["categories"].split(';'))
+            target_post_data.categories = list(unique_categories)
+        if new_mata_data.__contains__("creationTime") and new_mata_data["creationTime"]:
+            target_post_data.creationTime = new_mata_data["creationTime"]
+
+        if new_mata_data["title"] != target_post_data.title:
+            is_successes = PostHelper.rename_post(target_post_data.title, new_mata_data["title"], target_post_data)
+            if not is_successes:
+                return False
+            self.navigation_data.postsData.pop(old_path)
+            self.navigation_data.postsData[target_post_data.path] = target_post_data
+            return True
+
+        PostHelper.set_post_meta_data(target_post_data)
+        return True
+
     # endregion
 
     def publish_blog(self, is_remote: bool):

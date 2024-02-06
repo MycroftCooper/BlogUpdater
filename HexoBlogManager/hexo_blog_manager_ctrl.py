@@ -21,6 +21,8 @@ class HexoBlogManagerCtrl:
         navigate_tab = self.view.navigateTab
         navigate_tab.navigateUpdateViewSignal.connect(self.update_navigation_view)
         navigate_tab.navigateUpdatePostDataSignal.connect(self.update_navigation_data)
+        navigate_tab.navigateOpenPostSignal.connect(lambda path: PostHelper.open_post(path))
+        navigate_tab.navigateDeletePostSignal.connect(self.delete_post)
 
         options_tab = self.view.optionsTab
         options_tab.reloadOptionsDataSignal.connect(self.reload_options_data)
@@ -45,11 +47,13 @@ class HexoBlogManagerCtrl:
         self.init_write_tab()
 
     def create_new_post(self, new_post_info_dict: dict):
-        posts_data = self.model.navigation_data.postsData
+        if not new_post_info_dict.__contains__("title") or not new_post_info_dict["title"]:
+            ErrorDialog.log_error(f"Post title cant be null!", "ctrl>create_new_post")
+            return
 
-        post_path_root = self.model.options_data.data_dict["Posts Path"]
+        posts_data = self.model.navigation_data.postsData
         title = new_post_info_dict["title"]
-        path = os.path.join(post_path_root, "source", f"_posts", f"{title}.md")
+        path = PostHelper.get_post_path(title)
         if posts_data.__contains__(path):
             ErrorDialog.log_error(f"Post '{path}' already exist.", "ctrl>create_new_post")
             return
@@ -61,11 +65,11 @@ class HexoBlogManagerCtrl:
         if not is_success:
             return
         new_post_info_dict["path"] = path
-        self.editor_post_properties(new_post_info_dict)
-        self.model.open_post(title)
+        self.editor_post_properties(path, new_post_info_dict)
+        PostHelper.open_post(path)
 
-    def editor_post_properties(self, post_info_dict: dict):
-        pass
+    def editor_post_properties(self, path: str, post_info_dict: dict):
+        self.model.change_post_meta_data(path, post_info_dict)
 
     def import_posts(self, posts_list: list):
         pass
@@ -109,6 +113,11 @@ class HexoBlogManagerCtrl:
         navigation.postInfoViewDict = view_dict
 
         navigation.update_posts_info()
+
+    def delete_post(self, path):
+        if not self.model.delete_post(path):
+            return
+        self.update_navigation_view()
 
     @staticmethod
     def __filter_posts(posts, search_str):
