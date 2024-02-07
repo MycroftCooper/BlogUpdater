@@ -56,7 +56,7 @@ class TabOptionsView(QWidget):
                 self.grid_layout.addWidget(label, row, 0)
                 widget = QSpinBox(self)
                 widget.setMinimum(100)  # 设置最小值
-                widget.setMaximum(2000)  # 设置最大值
+                widget.setMaximum(20000)  # 设置最大值
                 widget.setValue(value)  # 设置初始值
                 widget.setSingleStep(100)
                 widget.setEnabled(False)

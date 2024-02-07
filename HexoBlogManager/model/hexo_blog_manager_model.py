@@ -25,6 +25,9 @@ class HexoBlogManagerModel:
     def __init__(self):
         self.load_options_data()
 
+    def __del__(self):
+        HexoCmdHelper.terminate_process()
+
     # region Options
     def load_options_data(self):
         options_file = Path(self.OptionsDataFilePath)
@@ -34,7 +37,8 @@ class HexoBlogManagerModel:
                 self.options_data = OptionsData(**options_dict)
         else:
             self.options_data = OptionsData()
-        HexoCmdHelper.set_root(self.options_data.data_dict['Blog Root Path'])
+        HexoCmdHelper.init(
+            self.options_data.data_dict['Blog Root Path'], self.options_data.data_dict['Publish Timeout Limit'])
         PostHelper.set_posts_root(self.options_data.data_dict['Posts Path'])
 
     def save_options_data(self):

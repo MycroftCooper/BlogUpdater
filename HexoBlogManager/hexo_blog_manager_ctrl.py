@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import webbrowser
 from datetime import datetime
 
 import model
@@ -34,6 +35,10 @@ class HexoBlogManagerCtrl:
         write_tab.refreshConfigSignal.connect(self.refresh_write_tab_config)
         write_tab.createNewPostSignal.connect(self.create_new_post)
         write_tab.importNewPostSignal.connect(self.import_posts)
+
+        publish_tab = self.view.publishTab
+        publish_tab.publishSignal.connect(self.publish)
+        publish_tab.openBlogSignal.connect(self.open_blog)
 
     # region Write Ctrl
     def init_write_tab(self):
@@ -80,11 +85,39 @@ class HexoBlogManagerCtrl:
     # endregion
 
     # region Publish Ctrl
-    def publish(self, is_remote: bool):
-        pass
+    def publish(self, is_remote: bool, is_need_clean: bool):
+        output_text_edit = self.view.publishTab.publish_output
+        output_text_edit.clear()
+
+        if is_need_clean:
+            std_output, std_err = HexoCmdHelper.clean()
+            output_text_edit.append("Clean Output:\n" + std_output.decode() + "\n" + std_err.decode())
+
+        std_output, std_err = HexoCmdHelper.generate()
+        output_text_edit.append("Generate Output:\n" + std_output.decode() + "\n" + std_err.decode())
+
+        if is_remote:
+            std_output, std_err = HexoCmdHelper.deploy()
+            output_text_edit.append("Deploy Output:\n" + std_output.decode() + "\n" + std_err.decode())
+        else:
+            std_output, std_err = HexoCmdHelper.server(self.model.options_data.data_dict["Port"])
+            output_text_edit.append("Server Output:\n" + std_output.decode() + "\n" + std_err.decode())
 
     def open_blog(self, is_remote: bool):
-        pass
+        data_dict = self.model.options_data.data_dict
+
+        if is_remote:
+            if not data_dict.__contains__("Blog Remote Url") or not data_dict["Blog Remote Url"]:
+                ErrorDialog.log_error("options didn't set Blog Remote Url!", "ctrl>open_blog")
+                return
+            target_url = data_dict["Blog Remote Url"]
+        else:
+            if not data_dict.__contains__("Blog Local Url") or not data_dict["Blog Local Url"]:
+                ErrorDialog.log_error("options didn't set Blog Local Url!", "ctrl>open_blog")
+                return
+            target_url = data_dict["Blog Local Url"]
+
+        webbrowser.open(target_url)
 
     # endregion
 

@@ -1,7 +1,11 @@
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QCheckBox, QHBoxLayout, QPushButton, QTextEdit)
+from PyQt5.QtCore import (pyqtSignal)
 
 
 class TabPublishView(QWidget):
+    publishSignal = pyqtSignal(bool, bool)
+    openBlogSignal = pyqtSignal(bool)
+
     def __init__(self, parent: QWidget):
         super().__init__(parent)
         self.__init_tab_ui()
@@ -11,19 +15,16 @@ class TabPublishView(QWidget):
 
         # 复选框
         self.cleanup_checkbox = QCheckBox("Need Clean Up")
-        self.update_news_checkbox = QCheckBox("Updated News")
-        self.update_weather_checkbox = QCheckBox("Updated Weather")
-
         layout.addWidget(self.cleanup_checkbox)
-        layout.addWidget(self.update_news_checkbox)
-        layout.addWidget(self.update_weather_checkbox)
 
         # 按钮和文本输入框的网格布局
         h_box_layout = QHBoxLayout()
-        self.publish_local_button = QPushButton("Publish To Local")
-        self.publish_remote_button = QPushButton("Publish To Remote")
-        h_box_layout.addWidget(self.publish_local_button)
-        h_box_layout.addWidget(self.publish_remote_button)
+        self.publish_local_btn = QPushButton("Publish To Local")
+        self.publish_local_btn.clicked.connect(lambda: self.publishSignal.emit(False, self.cleanup_checkbox.isChecked()))
+        self.publish_remote_btn = QPushButton("Publish To Remote")
+        self.publish_remote_btn.clicked.connect(lambda: self.publishSignal.emit(True, self.cleanup_checkbox.isChecked()))
+        h_box_layout.addWidget(self.publish_local_btn)
+        h_box_layout.addWidget(self.publish_remote_btn)
         layout.addLayout(h_box_layout)
 
         # 文本显示区域
@@ -34,10 +35,12 @@ class TabPublishView(QWidget):
 
         # 底部的按钮
         h_box_layout = QHBoxLayout()
-        self.open_local_button = QPushButton("Open Local Blog")
-        self.open_remote_button = QPushButton("Open Remote Blog")
-        h_box_layout.addWidget(self.open_local_button)
-        h_box_layout.addWidget(self.open_remote_button)
+        self.open_local_btn = QPushButton("Open Local Blog")
+        self.open_local_btn.clicked.connect(lambda: self.openBlogSignal.emit(False))
+        self.open_remote_btn = QPushButton("Open Remote Blog")
+        self.open_remote_btn.clicked.connect(lambda: self.openBlogSignal.emit(True))
+        h_box_layout.addWidget(self.open_local_btn)
+        h_box_layout.addWidget(self.open_remote_btn)
         layout.addLayout(h_box_layout)
 
         self.setLayout(layout)

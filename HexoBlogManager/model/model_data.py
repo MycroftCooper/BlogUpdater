@@ -10,6 +10,7 @@ class OptionsData:
     data_dict: dict = field(default_factory=lambda: {
         "Blog Remote Url": "",
         "Blog Local Url": "",
+        "Port": 4000,
         "Blog Root Path": "",
         "Posts Path": "",
         "Assets Path": "",
