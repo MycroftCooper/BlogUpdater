@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import (QTextEdit, QFrame, QLabel, QFileDialog, QWidget, QV
                              QLineEdit, QComboBox, QDateTimeEdit)
 from PyQt5.QtCore import (QDateTime, Qt, pyqtSignal)
 from PyQt5.QtGui import QDragEnterEvent, QDropEvent
+from .format_helper import FormatHelper
 
 
 class TabWriteView(QWidget):
@@ -115,11 +116,15 @@ class TabWriteView(QWidget):
         self.existent_tags_text.setText(tags_text)
 
     def __on_create_new_post_btn_click(self):
+        categories = FormatHelper.str_data_2_list_data(self.categorization_input.text(), ';')
+        tags = FormatHelper.str_data_2_list_data(self.tags_input.text(), ';')
+        int_timestamp = FormatHelper.qt_time_2_int_timestamp(self.creation_time_edit.dateTime())
+
         new_post_info_dict = {
             "title": self.title_input.text(),
-            "tags": self.tags_input.text(),
-            "categories": self.categorization_input.text(),
-            "creationTime": self.creation_time_edit.dateTime().toSecsSinceEpoch()
+            "tags": tags,
+            "categories": categories,
+            "creationTime": int_timestamp
         }
         self.createNewPostSignal.emit(new_post_info_dict)
         self.title_input.clear()

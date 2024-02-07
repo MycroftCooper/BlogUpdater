@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout, QDateTimeEdit
 from PyQt5.QtCore import QDateTime
+from .format_helper import FormatHelper
 
 
 class PostMetadataEditorDialog(QDialog):
@@ -11,12 +12,14 @@ class PostMetadataEditorDialog(QDialog):
         layout = QVBoxLayout(self)
 
         # 创建标签和文本框
+        self.pathLabel = QLabel("Path:")
         self.titleEdit = QLineEdit(self)
         self.categoriesEdit = QLineEdit(self)
         self.tagsEdit = QLineEdit(self)
         self.creationTimeEdit = QDateTimeEdit(self)
         self.creationTimeEdit.setCalendarPopup(True)
         self.creationTimeEdit.setDateTime(QDateTime.currentDateTime())
+        layout.addWidget(self.pathLabel)
         layout.addWidget(QLabel("Title:"))
         layout.addWidget(self.titleEdit)
         layout.addWidget(QLabel("Categories:"))
@@ -42,21 +45,24 @@ class PostMetadataEditorDialog(QDialog):
         layout.addLayout(button_layout)
 
     def set_data(self, data):
+        self.pathLabel.setText(f"Path: \n{data["path"]}")
         if "title" in data:
             self.titleEdit.setText(data["title"])
         if "categories" in data:
-            self.categoriesEdit.setText(data["categories"])
+            self.categoriesEdit.setText(FormatHelper.list_data_2_str_data(data["categories"], ";"))
         if "tags" in data:
-            self.tagsEdit.setText(data["tags"])
+            self.tagsEdit.setText(FormatHelper.list_data_2_str_data(data["tags"], ";"))
         if "creation_time" in data:
-            # 假设 creation_time 是以 'YYYY-MM-DD HH:MM:SS' 格式的字符串
-            creation_time = QDateTime.fromString(data["creation_time"], "yyyy-MM-dd HH:mm:ss")
-            self.creationTimeEdit.setDateTime(creation_time)
+            self.creationTimeEdit.setDateTime(FormatHelper.int_timestamp_2_qt_time(data["creation_time"]))
 
     def get_data(self):
+        categories = FormatHelper.str_data_2_list_data(self.categoriesEdit.text(), ";")
+        tags = FormatHelper.str_data_2_list_data(self.tagsEdit.text(), ";")
+        int_timestamp = FormatHelper.qt_time_2_int_timestamp(self.creationTimeEdit.dateTime())
+
         return {
             "title": self.titleEdit.text(),
-            "categories": self.categoriesEdit.text(),
-            "tags": self.tagsEdit.text(),
-            "creation_time": self.creationTimeEdit.dateTime().toString()
+            "categories": categories,
+            "tags": tags,
+            "creation_time": int_timestamp
         }

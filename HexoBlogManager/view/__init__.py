@@ -8,6 +8,7 @@ from .post_info_widget import PostInfoWidget
 from .post_group_widget import PostGroupWidget
 from .error_dialog import ErrorDialog
 from .navigate_view_enum import SortBy, InfoShowRule, GroupBy
+from .format_helper import FormatHelper
 
 __all__ = [
     "HexoBlogManagerView",
@@ -21,5 +22,6 @@ __all__ = [
     "PostMetadataEditorDialog",
     "PostGroupWidget",
     "PostInfoWidget",
-    "ErrorDialog"
+    "ErrorDialog",
+    "FormatHelper"
 ]

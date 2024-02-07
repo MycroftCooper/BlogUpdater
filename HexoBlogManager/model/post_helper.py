@@ -49,18 +49,18 @@ class PostHelper:
         return True
 
     @staticmethod
-    def rename_post(old_name: str, new_name: str, data: PostData):
-        old_path = PostHelper.get_post_path(old_name)
+    def rename_post(old_path: str, new_name: str, data: PostData):
         if not PostHelper.is_post_exists_in_folder(old_path):
             ErrorDialog.log_error(f"cant rename，because post<{old_path}> is not exist!", "model>rename_post")
             return False
         new_path = PostHelper.get_post_path(new_name)
-        if PostHelper.is_post_exists_in_folder(new_path):
+        if new_path != old_path and PostHelper.is_post_exists_in_folder(new_path):
             ErrorDialog.log_error(f"cant rename，because post<{old_path}> is already exist!", "model>rename_post")
             return False
         data.title = new_name
         data.path = new_path
-        os.rename(old_path, new_path)
+        if new_path != old_path:
+            os.rename(old_path, new_path)
         PostHelper.set_post_meta_data(data)
         return True
 
@@ -125,41 +125,54 @@ class PostHelper:
 
         title_pattern = r'^title:\s*(.*)$'
         date_pattern = r'^date:\s*(.*)$'
-        categories_pattern = r'^categories:\s*\n(^\s*- .*$)+'
         category_pattern = r'^\s*- (.*)$'
-        tags_pattern = r'^tags:\s*\n(^\s*- .*$)+'
         tag_pattern = r'^\s*- (.*)$'
 
+        in_tags_section = False
+        in_categories_section = False
+
         for line in metadata_str.split('\n'):
-            title_match = re.match(title_pattern, line, re.M)
+            # Title
+            title_match = re.match(title_pattern, line)
             if title_match:
                 post_data.title = title_match.group(1).strip()
 
-            date_match = re.match(date_pattern, line, re.M)
+            # Date
+            date_match = re.match(date_pattern, line)
             if date_match:
                 date_str = date_match.group(1).strip()
-                # 解析日期时间字符串
                 try:
                     post_data.creationTime = int(datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").timestamp())
                 except ValueError:
                     post_data.creationTime = 0
 
-            categories_match = re.search(categories_pattern, metadata_str, re.M)
-            if categories_match:
-                categories = re.findall(category_pattern, categories_match.group(0), re.M)
-                post_data.categories = [category.strip() for category in categories]
+            # Detect sections
+            if line.strip() == 'tags:':
+                in_tags_section = True
+                in_categories_section = False
+                post_data.tags = list()
+                continue
+            elif line.strip() == 'categories:':
+                in_categories_section = True
+                in_tags_section = False
+                post_data.categories = list()
+                continue
 
-            tags_match = re.search(tags_pattern, metadata_str, re.M)
-            if tags_match:
-                tags = re.findall(tag_pattern, tags_match.group(0), re.M)
-                post_data.tags = [tag.strip() for tag in tags]
+            if in_tags_section:
+                tag_match = re.match(tag_pattern, line)
+                if tag_match:
+                    post_data.tags.append(tag_match.group(1).strip())
 
-        # 获取文件最后修改时间
+            if in_categories_section:
+                category_match = re.match(category_pattern, line)
+                if category_match:
+                    post_data.categories.append(category_match.group(1).strip())
+
+        # Get file last update time and size
         post_data.lastUpdateTime = int(os.path.getmtime(path))
-
-        # 获取文件大小
         try:
-            post_data.size = os.path.getsize(path)  # 文件大小，以字节为单位
+            post_data.size = os.path.getsize(path)
         except OSError:
             post_data.size = -1
+
         return post_data

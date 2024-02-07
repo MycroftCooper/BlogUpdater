@@ -2,11 +2,10 @@ from enum import Enum, Flag, auto
 
 
 class SortBy(Enum):
-    NONE = 0
-    Title = 1
-    Size = 2
-    CreationTime = 3
-    LastUpdateTime = 4
+    Title = 0
+    Size = 1
+    CreationTime = 2
+    LastUpdateTime = 3
 
 
 class GroupBy(Enum):

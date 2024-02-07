@@ -181,4 +181,4 @@ class TabNavigateView(QWidget):
             for post_info_widget in group_widget.post_info_widgets:
                 post_info_widget.openPostSignal.connect(lambda path: self.navigateOpenPostSignal.emit(path))
                 post_info_widget.deletePostSignal.connect(lambda path: self.navigateDeletePostSignal.emit(path))
-                post_info_widget.editePostMateDataSignal.connect(lambda data: self.navigateEditPostMetadataSignal(data))
+                post_info_widget.editePostMateDataSignal.connect(lambda data: self.navigateEditPostMetadataSignal.emit(data))

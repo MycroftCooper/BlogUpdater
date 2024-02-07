@@ -1,9 +1,8 @@
-import os
-import math
 from datetime import datetime
 from PyQt5.QtCore import (Qt, pyqtSignal)
-from PyQt5.QtWidgets import (QMessageBox, QGridLayout, QFrame, QWidget, QLabel, QVBoxLayout, QPushButton, QHBoxLayout,
+from PyQt5.QtWidgets import (QDialog, QMessageBox, QGridLayout, QFrame, QWidget, QLabel, QVBoxLayout, QPushButton, QHBoxLayout,
                              QSizePolicy)
+from .format_helper import FormatHelper
 from .navigate_view_enum import InfoShowRule
 from .post_metadata_editor_view import PostMetadataEditorDialog
 
@@ -26,15 +25,15 @@ class PostInfoWidget(QWidget):
         # 创建并添加标签
         self.title_str = QLabel(self.post_data.title)
         self.categories_label = QLabel("Categories: ")
-        self.categories_str = QLabel('; '.join(self.post_data.categories))
+        self.categories_str = QLabel(FormatHelper.list_data_2_str_data(self.post_data.categories, ";"))
         self.tags_label = QLabel("Tags: ")
-        self.tags_str = QLabel('; '.join(self.post_data.tags))
+        self.tags_str = QLabel(FormatHelper.list_data_2_str_data(self.post_data.tags, ";"))
         self.size_label = QLabel("Size: ")
-        self.size_str = QLabel(self.__convert_bytes(self.post_data.size))
+        self.size_str = QLabel(FormatHelper.convert_bytes(self.post_data.size))
         self.creation_time_label = QLabel("Creation Time: ")
-        self.creation_time_str = QLabel(self.__format_timestamp(self.post_data.creationTime))
+        self.creation_time_str = QLabel(FormatHelper.int_timestamp_2_str(self.post_data.creationTime))
         self.last_update_time_label = QLabel("Last Update Time: ")
-        self.last_update_time_str = QLabel(self.__format_timestamp(self.post_data.lastUpdateTime))
+        self.last_update_time_str = QLabel(FormatHelper.int_timestamp_2_str(self.post_data.lastUpdateTime))
 
         info_layout = QGridLayout()
         info_layout.addWidget(self.title_str, 0, 0)
@@ -93,19 +92,25 @@ class PostInfoWidget(QWidget):
 
     def __on_edit_metadata_btn_click(self):
         dialog = PostMetadataEditorDialog(self)
+        if self.post_data.creationTime == 0:
+            creation_time = int(datetime.now().timestamp())
+        else:
+            creation_time = self.post_data.creationTime
 
         # 设置初始数据
         initial_data = {
+            "path": self.post_data.path,
             "title": self.post_data.title,
-            "categories": '; '.join(self.post_data.categories),
-            "tags": '; '.join(self.post_data.tags),
-            "creation_time": self.__format_timestamp(self.post_data.creationTime)
+            "categories": self.post_data.categories,
+            "tags": self.post_data.tags,
+            "creation_time": creation_time
         }
         dialog.set_data(initial_data)
 
         if dialog.exec_() == QDialog.Accepted:
             data = dialog.get_data()
-        self.editePostMateDataSignal.emit(data)
+            data["path"] = self.post_data.path
+            self.editePostMateDataSignal.emit(data)
 
     def __on_del_post_btn_click(self):
         reply = QMessageBox.question(self, 'Confirm Deletion',
@@ -113,17 +118,3 @@ class PostInfoWidget(QWidget):
                                      , QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if reply == QMessageBox.Yes:
             self.deletePostSignal.emit(self.post_data.path)
-
-    @staticmethod
-    def __format_timestamp(timestamp):
-        return datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
-
-    @staticmethod
-    def __convert_bytes(size_bytes):
-        if size_bytes == 0:
-            return "0B"
-        size_name = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
-        i = int(math.floor(math.log(size_bytes, 1024)))
-        p = math.pow(1024, i)
-        s = round(size_bytes / p, 2)
-        return f"{s} {size_name[i]}"

@@ -52,6 +52,7 @@ class NavigationData:
                 if not self.categories.__contains__(category):
                     self.categories.append(category)
 
+
 @dataclass
 class PostData:
     title: str = ""

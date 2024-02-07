@@ -22,6 +22,7 @@ class HexoBlogManagerCtrl:
         navigate_tab.navigateUpdateViewSignal.connect(self.update_navigation_view)
         navigate_tab.navigateUpdatePostDataSignal.connect(self.update_navigation_data)
         navigate_tab.navigateOpenPostSignal.connect(lambda path: PostHelper.open_post(path))
+        navigate_tab.navigateEditPostMetadataSignal.connect(lambda data: self.editor_post_properties(data["path"], data))
         navigate_tab.navigateDeletePostSignal.connect(self.delete_post)
 
         options_tab = self.view.optionsTab
@@ -70,6 +71,8 @@ class HexoBlogManagerCtrl:
 
     def editor_post_properties(self, path: str, post_info_dict: dict):
         self.model.change_post_meta_data(path, post_info_dict)
+        self.refresh_write_tab_config()
+
 
     def import_posts(self, posts_list: list):
         pass
@@ -105,10 +108,9 @@ class HexoBlogManagerCtrl:
 
         view_dict = self.__group_posts(posts_data, navigation.infoGroupBy)
 
-        if navigation.infoSortBy != SortBy.NONE:
-            for group, posts in view_dict.items():
-                sorted_posts = self.__sort_posts(posts, navigation.infoSortBy, navigation.isReverse)
-                view_dict[group] = sorted_posts
+        for group, posts in view_dict.items():
+            sorted_posts = self.__sort_posts(posts, navigation.infoSortBy, navigation.isReverse)
+            view_dict[group] = sorted_posts
 
         navigation.postInfoViewDict = view_dict
 

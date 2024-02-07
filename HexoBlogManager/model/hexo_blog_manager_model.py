@@ -129,19 +129,17 @@ class HexoBlogManagerModel:
         target_post_data = self.navigation_data.postsData[path]
 
         if new_mata_data.__contains__("tags") and new_mata_data["tags"]:
-            unique_tags = set(new_mata_data["tags"].split(';'))
-            target_post_data.tags = list(unique_tags)
+            target_post_data.tags = new_mata_data["tags"]
         if new_mata_data.__contains__("categories") and new_mata_data["categories"]:
-            unique_categories = set(new_mata_data["categories"].split(';'))
-            target_post_data.categories = list(unique_categories)
+            target_post_data.categories = new_mata_data["categories"]
         if new_mata_data.__contains__("creationTime") and new_mata_data["creationTime"]:
             target_post_data.creationTime = new_mata_data["creationTime"]
 
         if new_mata_data["title"] != target_post_data.title:
-            is_successes = PostHelper.rename_post(target_post_data.title, new_mata_data["title"], target_post_data)
+            is_successes = PostHelper.rename_post(path, new_mata_data["title"], target_post_data)
             if not is_successes:
                 return False
-            self.navigation_data.postsData.pop(old_path)
+            self.navigation_data.postsData.pop(path)
             self.navigation_data.postsData[target_post_data.path] = target_post_data
             return True
 
