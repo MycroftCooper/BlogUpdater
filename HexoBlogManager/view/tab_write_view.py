@@ -9,6 +9,7 @@ class TabWriteView(QWidget):
     refreshConfigSignal = pyqtSignal()
     createNewPostSignal = pyqtSignal(dict)
     importNewPostSignal = pyqtSignal(list)
+    createNewPostCallbackSignal = pyqtSignal(bool, str)
 
     existentCategoryList = []
     existentTagList = []
@@ -77,6 +78,7 @@ class TabWriteView(QWidget):
 
         std_output_label = QLabel("Std output:")
         self.layout.addWidget(std_output_label)
+        self.createNewPostCallbackSignal.connect(self.__on_create_new_post_callback)
         self.std_output_text = QTextEdit()
         self.std_output_text.setReadOnly(True)
         self.std_output_text.setMaximumHeight(60)
@@ -131,6 +133,11 @@ class TabWriteView(QWidget):
         self.tags_input.clear()
         self.categorization_input.clear()
         self.creation_time_edit.setDateTime(QDateTime.currentDateTime())
+
+    def __on_create_new_post_callback(self, is_success: bool, output_str: str):
+        self.std_output_text.setText(output_str)
+        if is_success:
+            self.update_config()
 
     def __on_import_post_btn_click(self):
         options = QFileDialog.Options()

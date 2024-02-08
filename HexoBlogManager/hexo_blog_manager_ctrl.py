@@ -3,6 +3,7 @@ import sys
 import subprocess
 import webbrowser
 from datetime import datetime
+from PyQt5.QtCore import (pyqtSignal)
 
 import model
 from view import *
@@ -11,6 +12,7 @@ from model import *
 
 class HexoBlogManagerCtrl:
     def __init__(self, view: HexoBlogManagerView, mgr_model: HexoBlogManagerModel):
+        error_dialog = ErrorDialog()
         self.view = view
         self.model = mgr_model
         self.bind_view_signal()
@@ -53,31 +55,34 @@ class HexoBlogManagerCtrl:
         self.init_write_tab()
 
     def create_new_post(self, new_post_info_dict: dict):
+        self.view.writeTab.std_output_text.clear()
         if not new_post_info_dict.__contains__("title") or not new_post_info_dict["title"]:
-            ErrorDialog.log_error(f"Post title cant be null!", "ctrl>create_new_post")
+            ErrorDialog().error_signal.emit(f"Post title cant be null!", "ctrl>create_new_post")
             return
 
         posts_data = self.model.navigation_data.postsData
         title = new_post_info_dict["title"]
         path = PostHelper.get_post_path(title)
         if posts_data.__contains__(path):
-            ErrorDialog.log_error(f"Post '{path}' already exist.", "ctrl>create_new_post")
+            ErrorDialog().error_signal.emit(f"Post '{path}' already exist.", "ctrl>create_new_post")
             return
 
-        is_success, output_str = self.model.create_new_post(title)
-        self.view.writeTab.std_output_text.clear()
-        self.view.writeTab.std_output_text.setText(output_str)
+        def callback(is_success, output_str):
+            if is_success:
+                new_post_data = PostHelper.scan_post_data(title, True)
+                self.model.navigation_data.postsData[new_post_data.path] = new_post_data
 
-        if not is_success:
-            return
-        new_post_info_dict["path"] = path
-        self.editor_post_properties(path, new_post_info_dict)
-        PostHelper.open_post(path)
+                new_post_info_dict["path"] = path
+                self.editor_post_properties(path, new_post_info_dict, False)
 
-    def editor_post_properties(self, path: str, post_info_dict: dict):
+                PostHelper.open_post(path)
+            self.view.writeTab.createNewPostCallbackSignal.emit(is_success, output_str)
+        HexoCmdHelper.new(title, callback)
+
+    def editor_post_properties(self, path: str, post_info_dict: dict, need_refresh_ui: bool = True):
         self.model.change_post_meta_data(path, post_info_dict)
-        self.refresh_write_tab_config()
-
+        if need_refresh_ui:
+            self.refresh_write_tab_config()
 
     def import_posts(self, posts_list: list):
         pass
@@ -89,31 +94,46 @@ class HexoBlogManagerCtrl:
         output_text_edit = self.view.publishTab.publish_output
         output_text_edit.clear()
 
+        def publish_callback(is_success, output_str):
+            print(f"publish_callback:\noutput:\t{output_str}")
+            if is_remote:
+                output_text_edit.append("Deploy Output:\n" + output_str)
+            else:
+                output_text_edit.append("Server Output:\n" + output_str)
+
+        def generate_callback(is_success, output_str):
+            print(f"generate_callback:\noutput:\t{output_str}")
+            output_text_edit.append("Generate Output:\n" + output_str)
+            if not is_success:
+                return
+            if is_remote:
+                HexoCmdHelper.deploy(publish_callback)
+            else:
+                HexoCmdHelper.server(self.model.options_data.data_dict["Port"])
+
         if is_need_clean:
-            std_output, std_err = HexoCmdHelper.clean()
-            output_text_edit.append("Clean Output:\n" + std_output.decode() + "\n" + std_err.decode())
+            def clean_callback(is_success, output_str):
+                print(f"clean_callback:\noutput:\t{output_str}")
+                output_text_edit.append("Clean Output:\n" + output_str)
+                if not is_success:
+                    return
+                HexoCmdHelper.generate(generate_callback)
 
-        std_output, std_err = HexoCmdHelper.generate()
-        output_text_edit.append("Generate Output:\n" + std_output.decode() + "\n" + std_err.decode())
-
-        if is_remote:
-            std_output, std_err = HexoCmdHelper.deploy()
-            output_text_edit.append("Deploy Output:\n" + std_output.decode() + "\n" + std_err.decode())
+            HexoCmdHelper.clean(clean_callback)
         else:
-            std_output, std_err = HexoCmdHelper.server(self.model.options_data.data_dict["Port"])
-            output_text_edit.append("Server Output:\n" + std_output.decode() + "\n" + std_err.decode())
+            HexoCmdHelper.generate(generate_callback)
 
     def open_blog(self, is_remote: bool):
         data_dict = self.model.options_data.data_dict
 
         if is_remote:
             if not data_dict.__contains__("Blog Remote Url") or not data_dict["Blog Remote Url"]:
-                ErrorDialog.log_error("options didn't set Blog Remote Url!", "ctrl>open_blog")
+                ErrorDialog().error_signal.emit("options didn't set Blog Remote Url!", "ctrl>open_blog")
                 return
             target_url = data_dict["Blog Remote Url"]
         else:
             if not data_dict.__contains__("Blog Local Url") or not data_dict["Blog Local Url"]:
-                ErrorDialog.log_error("options didn't set Blog Local Url!", "ctrl>open_blog")
+                ErrorDialog().error_signal.emit("options didn't set Blog Local Url!", "ctrl>open_blog")
                 return
             target_url = data_dict["Blog Local Url"]
 
@@ -241,6 +261,6 @@ class HexoBlogManagerCtrl:
             else:
                 subprocess.run(["xdg-open", file_path])
         except Exception as e:
-            ErrorDialog.log_error(e, "Ctrl>openHexoConfigFile")
+            ErrorDialog().error_signal.emit(e, "Ctrl>openHexoConfigFile")
             print(f"Error opening file: {e}")
     # endregion

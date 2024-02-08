@@ -102,12 +102,11 @@ class TabOptionsView(QWidget):
     def __check_submission(self):
         for path_widget in self.path_widgets.values():
             if not path_widget.path:
-                ErrorDialog.log_warning(self, "Options Save Warning", f"{path_widget.labelStr} cant be null!")
+                ErrorDialog.warning_signal.emit("Options Save Warning", f"{path_widget.labelStr} cant be null!")
                 return False
 
             if not path_widget.is_path_exists:
-                ErrorDialog.log_warning(self, "Options Save Warning",
-                                        f"{path_widget.labelStr} : {path_widget.path} not exists!")
+                ErrorDialog.warning_signal.emit("Options Save Warning", f"{path_widget.labelStr} : {path_widget.path} not exists!")
                 return False
         return True
 

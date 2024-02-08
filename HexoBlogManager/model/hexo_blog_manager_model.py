@@ -47,7 +47,7 @@ class HexoBlogManagerModel:
                 options_dict = dataclasses.asdict(self.options_data)
                 json.dump(options_dict, file, indent=4)
         except Exception as e:
-            ErrorDialog.log_error(e, "model>saveOptionsData")
+            ErrorDialog().error_signal.emit(e, "model>saveOptionsData")
 
     # endregion
 
@@ -62,7 +62,7 @@ class HexoBlogManagerModel:
                     navigation_file_data['postsData'] = posts_data
                     self.navigation_data = NavigationData(**navigation_file_data)
             except Exception as e:
-                ErrorDialog.log_error(e, "model>loadNavigationData")
+                ErrorDialog().error_signal.emit(e, "model>loadNavigationData")
         else:
             self.navigation_data = NavigationData()
             self.scan_all_post()
@@ -76,7 +76,7 @@ class HexoBlogManagerModel:
                                                 for k, v in self.navigation_data.postsData.items()}
                 json.dump(navigation_dict, file, indent=4)
         except Exception as e:
-            ErrorDialog.log_error(e, "model>saveNavigationData")
+            ErrorDialog().error_signal.emit(e, "model>saveNavigationData")
 
     def scan_all_post(self):
         last_scan_time = self.navigation_data.lastUpdateTime
@@ -98,7 +98,7 @@ class HexoBlogManagerModel:
 
     def delete_post(self, path):
         if not self.navigation_data.postsData.__contains__(path):
-            ErrorDialog.log_error(f"cant delete，because post<{path}> is not in data!", "model>delete_post")
+            ErrorDialog().error_signal.emit(f"cant delete，because post<{path}> is not in data!", "model>delete_post")
             return False
         PostHelper.del_post(path)
         self.navigation_data.postsData.pop(path)
@@ -109,26 +109,9 @@ class HexoBlogManagerModel:
     # endregion
 
     # region Write
-    def create_new_post(self, title: str):
-        is_success, output_str = False, ""
-        std_err = b""
-        try:
-            std_out, std_err = HexoCmdHelper.new(title)
-            output_str = std_out.decode("utf-8")
-            is_success = True
-        except Exception as e:
-            if std_err:  # 检查 std_err 是否已赋值
-                output_str = std_err.decode("utf-8")
-            else:
-                ErrorDialog.log_error(e, "model>create_new_post")
-        if is_success:
-            new_post_data = PostHelper.scan_post_data(title, True)
-            self.navigation_data.postsData[new_post_data.path] = new_post_data
-        return is_success, output_str
-
     def change_post_meta_data(self, path: str, new_mata_data: dict):
         if not self.navigation_data.postsData.__contains__(path):
-            ErrorDialog.log_error(f"post<{path}> is not exist in data!", "change_post_mata_data")
+            ErrorDialog().error_signal.emit(f"post<{path}> is not exist in data!", "change_post_mata_data")
             return False
         target_post_data = self.navigation_data.postsData[path]
 

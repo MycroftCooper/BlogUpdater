@@ -12,7 +12,7 @@ class PostHelper:
     def load_all_post_path():
         folder_path = PostHelper.root
         if not os.path.exists(folder_path):
-            ErrorDialog.log_error(f"Folder path '{folder_path}' does not exist.", "model>loadAllPostPath")
+            ErrorDialog().error_signal.emit(f"Folder path '{folder_path}' does not exist.", "model>loadAllPostPath")
             return []
         md_file_paths = []
         for root, _, files in os.walk(folder_path):
@@ -51,11 +51,11 @@ class PostHelper:
     @staticmethod
     def rename_post(old_path: str, new_name: str, data: PostData):
         if not PostHelper.is_post_exists_in_folder(old_path):
-            ErrorDialog.log_error(f"cant rename，because post<{old_path}> is not exist!", "model>rename_post")
+            ErrorDialog().error_signal.emit(f"cant rename，because post<{old_path}> is not exist!", "model>rename_post")
             return False
         new_path = PostHelper.get_post_path(new_name)
         if new_path != old_path and PostHelper.is_post_exists_in_folder(new_path):
-            ErrorDialog.log_error(f"cant rename，because post<{old_path}> is already exist!", "model>rename_post")
+            ErrorDialog().error_signal.emit(f"cant rename，because post<{old_path}> is already exist!", "model>rename_post")
             return False
         data.title = new_name
         data.path = new_path

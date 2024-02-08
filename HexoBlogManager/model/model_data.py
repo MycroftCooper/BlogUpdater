@@ -20,7 +20,7 @@ class OptionsData:
         "Update News On Publish": False,
         "Update Weather On Publish": False,
         "Auto Publish at boot": False,
-        "Publish Timeout Limit:": 200
+        "Publish Timeout Limit": 200
     })
 
 
