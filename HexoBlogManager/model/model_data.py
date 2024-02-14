@@ -1,8 +1,5 @@
-import re
-import os
 from dataclasses import dataclass, field
 from datetime import datetime
-from view.error_dialog import ErrorDialog
 
 
 @dataclass

@@ -26,12 +26,14 @@ class HexoCmdHelper:
                 # 将输出解码为字符串
                 std_output = std_output.decode()
                 std_err = std_err.decode()
-                if std_err:
-                    is_success = False
-                    output_str = std_err
-                else:
+                # 检查返回码
+                return_code = HexoCmdHelper.process.returncode
+                if return_code == 0:
                     is_success = True
                     output_str = std_output
+                else:
+                    is_success = False
+                    output_str = std_err
                 output_str = f"IsSuccess:[{is_success}]\n" + output_str
             except subprocess.TimeoutExpired:
                 HexoCmdHelper.terminate_process()  # 超时时终止进程

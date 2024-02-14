@@ -1,16 +1,12 @@
 import dataclasses
 import os
-import ast
 import time
 import json
-import subprocess
-import threading
 import webbrowser
-from datetime import datetime
 from pathlib import Path
 from .hexo_cmd_helper import HexoCmdHelper
 from .post_helper import PostHelper
-from view.error_dialog import ErrorDialog
+from util.error_dialog import ErrorDialog
 from .model_data import OptionsData
 from .model_data import (PostData, NavigationData)
 
@@ -39,7 +35,7 @@ class HexoBlogManagerModel:
             self.options_data = OptionsData()
         HexoCmdHelper.init(
             self.options_data.data_dict['Blog Root Path'], self.options_data.data_dict['Publish Timeout Limit'])
-        PostHelper.set_posts_root(self.options_data.data_dict['Posts Path'])
+        PostHelper.set_root(self.options_data.data_dict['Posts Path'], self.options_data.data_dict['Assets Path'])
 
     def save_options_data(self):
         try:
@@ -79,6 +75,7 @@ class HexoBlogManagerModel:
             ErrorDialog().error_signal.emit(e, "model>saveNavigationData")
 
     def scan_all_post(self):
+        PostHelper.clean_empty_img_root()
         last_scan_time = self.navigation_data.lastUpdateTime
         post_path_list = PostHelper.load_all_post_path()
         post_data_dict = self.navigation_data.postsData

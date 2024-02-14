@@ -1,8 +1,8 @@
 from datetime import datetime
-from PyQt5.QtCore import (Qt, pyqtSignal)
+from PyQt5.QtCore import (pyqtSignal)
 from PyQt5.QtWidgets import (QDialog, QMessageBox, QGridLayout, QFrame, QWidget, QLabel, QVBoxLayout, QPushButton, QHBoxLayout,
                              QSizePolicy)
-from .format_helper import FormatHelper
+from util.format_helper import FormatHelper
 from .navigate_view_enum import InfoShowRule
 from .post_metadata_editor_view import PostMetadataEditorDialog
 
@@ -103,7 +103,7 @@ class PostInfoWidget(QWidget):
             "title": self.post_data.title,
             "categories": self.post_data.categories,
             "tags": self.post_data.tags,
-            "creation_time": creation_time
+            "creationTime": creation_time
         }
         dialog.set_data(initial_data)
 

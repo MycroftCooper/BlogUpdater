@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import (QTextEdit, QFrame, QLabel, QFileDialog, QWidget, QVBoxLayout, QFormLayout, QPushButton,
-                             QLineEdit, QComboBox, QDateTimeEdit)
+                             QLineEdit, QDateTimeEdit)
 from PyQt5.QtCore import (QDateTime, Qt, pyqtSignal)
 from PyQt5.QtGui import QDragEnterEvent, QDropEvent
-from .format_helper import FormatHelper
+from util.format_helper import FormatHelper
 
 
 class TabWriteView(QWidget):
@@ -163,6 +163,4 @@ class TabWriteView(QWidget):
         md_file_paths = [path for path in file_paths if path.endswith(".md")]
 
         if md_file_paths:
-            for file_path in md_file_paths:
-                print(file_path)
             self.importNewPostSignal.emit(file_paths)

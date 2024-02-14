@@ -1,7 +1,7 @@
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QGridLayout, QPushButton, QCheckBox, QSpinBox, QLabel, QMessageBox)
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QGridLayout, QPushButton, QCheckBox, QSpinBox, QLabel)
 from PyQt5.QtCore import (pyqtSignal)
 from .path_widget import (PathWidget, PathType)
-from .error_dialog import ErrorDialog
+from util.error_dialog import ErrorDialog
 
 
 class TabOptionsView(QWidget):

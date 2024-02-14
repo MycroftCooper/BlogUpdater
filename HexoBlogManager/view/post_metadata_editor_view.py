@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout, QDateTimeEdit
-from PyQt5.QtCore import QDateTime
-from .format_helper import FormatHelper
+from PyQt5.QtCore import Qt, QDateTime
+from util.format_helper import FormatHelper
 
 
 class PostMetadataEditorDialog(QDialog):
@@ -13,6 +13,7 @@ class PostMetadataEditorDialog(QDialog):
 
         # 创建标签和文本框
         self.pathLabel = QLabel("Path:")
+        self.pathLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.titleEdit = QLineEdit(self)
         self.categoriesEdit = QLineEdit(self)
         self.tagsEdit = QLineEdit(self)
@@ -45,15 +46,16 @@ class PostMetadataEditorDialog(QDialog):
         layout.addLayout(button_layout)
 
     def set_data(self, data):
-        self.pathLabel.setText(f"Path: \n{data["path"]}")
+        path = data["path"]
+        self.pathLabel.setText(f"Path: \n{path}")
         if "title" in data:
             self.titleEdit.setText(data["title"])
         if "categories" in data:
             self.categoriesEdit.setText(FormatHelper.list_data_2_str_data(data["categories"], ";"))
         if "tags" in data:
             self.tagsEdit.setText(FormatHelper.list_data_2_str_data(data["tags"], ";"))
-        if "creation_time" in data:
-            self.creationTimeEdit.setDateTime(FormatHelper.int_timestamp_2_qt_time(data["creation_time"]))
+        if "creationTime" in data:
+            self.creationTimeEdit.setDateTime(FormatHelper.int_timestamp_2_qt_time(data["creationTime"]))
 
     def get_data(self):
         categories = FormatHelper.str_data_2_list_data(self.categoriesEdit.text(), ";")
@@ -64,5 +66,5 @@ class PostMetadataEditorDialog(QDialog):
             "title": self.titleEdit.text(),
             "categories": categories,
             "tags": tags,
-            "creation_time": int_timestamp
+            "creationTime": int_timestamp
         }

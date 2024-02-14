@@ -3,11 +3,10 @@ import sys
 import subprocess
 import webbrowser
 from datetime import datetime
-from PyQt5.QtCore import (pyqtSignal)
 
-import model
 from view import *
 from model import *
+from util.error_dialog import ErrorDialog
 
 
 class HexoBlogManagerCtrl:
@@ -85,8 +84,22 @@ class HexoBlogManagerCtrl:
             self.refresh_write_tab_config()
 
     def import_posts(self, posts_list: list):
-        pass
+        if not posts_list or len(posts_list) < 0:
+            return
+        for post_path in posts_list:
+            is_success, output = PostHelper.import_post(post_path)
+            self.view.writeTab.createNewPostCallbackSignal.emit(is_success, output)
+            if not is_success:
+                continue
 
+            title = PostHelper.get_post_title(post_path)
+            new_post_model_data = PostHelper.scan_post_data(title, True)
+            self.model.navigation_data.postsData[new_post_model_data.path] = new_post_model_data
+
+            creation_time = int(os.path.getctime(post_path))
+            new_path = PostHelper.get_post_path(title)
+            post_data = {"title": title, "creationTime": creation_time}
+            self.editor_post_properties(new_path, post_data)
     # endregion
 
     # region Publish Ctrl
@@ -226,7 +239,7 @@ class HexoBlogManagerCtrl:
         elif sort_by == SortBy.Size:
             sorted_posts = sorted(posts, key=lambda post: post.size, reverse=is_reverse)
         elif sort_by == SortBy.CreationTime:
-            sorted_posts = sorted(posts, key=lambda post: post.creation_time, reverse=is_reverse)
+            sorted_posts = sorted(posts, key=lambda post: post.creationTime, reverse=is_reverse)
         elif sort_by == SortBy.LastUpdateTime:
             sorted_posts = sorted(posts, key=lambda post: post.lastUpdateTime, reverse=is_reverse)
         return sorted_posts

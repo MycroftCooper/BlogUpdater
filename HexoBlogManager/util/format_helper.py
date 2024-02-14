@@ -20,20 +20,39 @@ class FormatHelper:
         return qdt
 
     @staticmethod
-    def int_timestamp_2_str(timestamp):
+    def int_timestamp_2_str(timestamp: int):
         return datetime.fromtimestamp(timestamp).strftime(FormatHelper.time_str_format)
 
     @staticmethod
+    def time_str_2_int_timestamp(time_str: str):
+        try:
+            dt = datetime.strptime(time_str, FormatHelper.time_str_format)
+            return int(dt.timestamp())
+        except ValueError:
+            print("Invalid date-time format.")
+            return 1
+
+    @staticmethod
     def str_data_2_list_data(str_data: str, split: str):
-        stripped_items = [item_str.strip() for item_str in str_data.split(split) if item_str.strip()]
-        result = sorted(set(stripped_items))
+        result = []
+        seen = set()
+        for item in str_data.split(split):
+            item = item.strip()
+            if item and item not in seen:
+                seen.add(item)
+                result.append(item)
         return result
 
     @staticmethod
     def list_data_2_str_data(list_data: list, split: str):
-        filtered_list_data = [item.strip() for item in list_data if item and item.strip()]
-        str_data = split.join(sorted(set(filtered_list_data)))
-        return str_data
+        result = []
+        seen = set()
+        for item in list_data:
+            item = item.strip()
+            if item and item not in seen:
+                seen.add(item)
+                result.append(item)
+        return split.join(result)
 
     @staticmethod
     def convert_bytes(size_bytes):
