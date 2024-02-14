@@ -45,7 +45,7 @@ class PostHelper:
         img_target_path = os.path.join(img_sub_folder, img_name)
         new_url = os.path.relpath(img_target_path, post_root_parent)
         new_url = new_url.replace(os.sep, '/')  # 将路径分隔符替换为 '/'
-        return new_url
+        return '/' + new_url
 
     @staticmethod
     def get_post_title(path: str):
